@@ -1,13 +1,13 @@
-const aws=require("aws-sdk")
+const aws=require("aws-sdk")              //
 
 const uploadFile = async (files) => {  
 
     return new Promise(function (resolve, reject) {
 
-        aws.config.update({
+        aws.config.update({                                     //explore
             accessKeyId: "AKIAY3L35MCRZNIRGT6N",
             secretAccessKey: "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",
-            region: "ap-south-1"
+            region: "ap-south-1"                                   
         })
 
 
@@ -15,8 +15,8 @@ const uploadFile = async (files) => {
 
 
         let uploadParams = {
-            ACL: "public-read",
-            Bucket: "classroom-training-bucket",
+            ACL: "public-read",                         //
+            Bucket: "classroom-training-bucket",       //revise
             Key: "Group10/" + files.originalname,
             Body: files.buffer
         }
