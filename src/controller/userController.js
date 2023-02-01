@@ -2,7 +2,7 @@ const userModel=require("../model/userModel")
 const aws=require("aws-sdk")
 const mongoose=require("mongoose")
 const jwt=require("jsonwebtoken")
-const {userJoi,loginJoi}=require("../validator/joiValidation")
+const {userJoi,loginJoi,updateJoi}=require("../validator/joiValidation")
 const bcrypt=require("bcrypt")
 const {uploadFile}=require("../aws/aws")
 
@@ -46,13 +46,13 @@ try {
            profileUrl=uploadedFileURL
        }
        else{
-          return res.status(400).send({ msg: "No file found" })
+          return res.status(400).send({status:false, message: "No file found" })
        }
        
       data.profileImage=profileUrl
 
 	  const createData=await userModel.create(data)
-	  return res.status(201).send({status:true,message:createData})
+	  return res.status(201).send({status:true,message: "User created successfully",data:createData})
 } catch (error) {
 	return res.status(500).send({status:false,message:error.message})
 }
@@ -109,21 +109,51 @@ const userLogin = async function (req, res) {
       let userId=req.params.userId
 
        
-       const findData=await userModel.find()
+       const findData=await userModel.findById(userId)
        if(!findData) return res.status(404).send({status:false,message:"no data found"})
-       return res.status(200).send({status:true,message:findData})
+       return res.status(200).send({status:true,message: "User profile details",data:findData})
   }
 
-module.exports={createUser,userLogin,getData}
+
+  const putData=async (req,res)=>{
+ try {
+	   let userId=req.params.userId
+	    let data=req.body
+
+        let error
+        const validation=await updateJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message;return null})
+        if(!validation) return res.status(400).send({  status: false,message: error})
+
+        if(data.email||data.phone){
+            const existingData=await userModel.findOne({$or:[{email:data.email},{phone:data.phone}]})
+            if(existingData){
+                if(existingData.email==data.email)  return res.status(400).send({status:false,message:"email is already in use"})
+                if(existingData.phone==data.phone)  return res.status(400).send({status:false,message:"phone is already in use"})
+            }
+        }
+       console.log(data);
+	    const updateData=await userModel.findByIdAndUpdate(userId,{$set:data},{new:true})
+	    return res.status(200).send({status:false,message:"User profile updated",data:updateData})
+} catch (error) {
+	return res.status(500).send({status:false,message:error.message})
+}
+
+  }
 
 
 
-// ## GET /user/:userId/profile (Authentication required)
-// - Allow an user to fetch details of their profile.
+module.exports={createUser,userLogin,getData,putData}
+
+
+// ## PUT /user/:userId/profile (Authentication and Authorization required)
+// - Allow an user to update their profile.
+// - A user can update all the fields
 // - Make sure that userId in url param and in token is same
 // - __Response format__
-//   - _**On success**_ - Return HTTP status 200 and returns the user document. The response should be a JSON object like [this](#successful-response-structure)
+//   - _**On success**_ - Return HTTP status 200. Also return the updated user document. The response should be a JSON object like [this](#successful-response-structure)
 //   - _**On error**_ - Return a suitable error message with a valid HTTP status code. The response should be a JSON object like [this](#error-response-structure)
 // ```yaml
+
+
 
 

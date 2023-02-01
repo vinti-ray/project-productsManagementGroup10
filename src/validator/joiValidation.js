@@ -39,5 +39,34 @@ const loginJoi=Joi.object({
     password:Joi.string().required().regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,15}$/).message("please enter valid password")
 })
 
-module.exports={userJoi,loginJoi}
+
+
+//===================update user joi================
+const updateJoi=Joi.object({
+    fname:Joi.string().optional().regex(/^[a-zA-Z ]+$/).message("please enter valid fname"),
+
+    lname:Joi.string().optional().regex(/^[a-zA-Z ]+$/).message("please enter valid lname"),
+
+    email:Joi.string().optional().regex(/^[A-Za-z0-9._]{3,}@[A-Za-z]{3,}[.]{1,}[A-Za-z.]{2,8}$/).
+    message("please enter valid email"),
+
+    phone:Joi.string().optional().regex(/^[5-9]{1}[0-9]{9}$/).message("please enter valid mobile number"),
+
+    password:Joi.string().optional().regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,15}$/).message("please enter valid password"),
+
+    address:Joi.object({
+        shipping:Joi.object({
+            street:Joi.string().optional(),
+            city:Joi.string().optional(),
+            pincode:Joi.number().optional()
+        }),
+
+        billing:Joi.object({
+            street:Joi.string().optional(),
+            city:Joi.string().optional(),
+            pincode:Joi.number().optional()
+        })
+    }),
+})
+module.exports={userJoi,loginJoi,updateJoi}
 
