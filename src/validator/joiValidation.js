@@ -1,5 +1,6 @@
 const Joi=require("joi")
 
+//===========================user creation===============================
 const userJoi=Joi.object({
     fname:Joi.string().required().regex(/^[a-zA-Z ]+$/).message("please enter valid fname"),
 
@@ -29,5 +30,14 @@ const userJoi=Joi.object({
 
 })
 
-module.exports={userJoi}
+
+//=====================login joi=================
+
+const loginJoi=Joi.object({
+    email:Joi.string().required().regex(/^[A-Za-z0-9._]{3,}@[A-Za-z]{3,}[.]{1,}[A-Za-z.]{2,8}$/).
+    message("please enter valid email"),
+    password:Joi.string().required().regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,15}$/).message("please enter valid password")
+})
+
+module.exports={userJoi,loginJoi}
 
