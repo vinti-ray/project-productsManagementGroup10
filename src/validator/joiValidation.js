@@ -25,7 +25,7 @@ const userJoi=Joi.object({
         billing:Joi.object({
             street:Joi.string().required(),
             city:Joi.string().required(),
-            pincode:Joi.number().strict().required()
+            pincode:Joi.number().strict().required() //Joi.string().required().regex(/^[0-9]+$/).cast('number');
         })
     }),
 
@@ -66,6 +66,7 @@ const updateJoi=Joi.object({
             street:Joi.string().optional(),
             city:Joi.string().optional(),
             pincode:Joi.number().strict().optional()
+
         })
     }),
 })
@@ -80,5 +81,21 @@ const isValidPinCode = (value) => {
     return result
 }
 
-module.exports={userJoi,loginJoi,updateJoi,isValidPinCode}
+
+//==========================create Product joi===========================
+const productJoi=Joi.object({
+    title: Joi.string().required(),
+    description:Joi.string().required(),
+    price:Joi.number().required(),
+    currencyId:Joi.string().required().valid("INR"),
+    currencyFormat: Joi.string().required().valid("₹"),
+    isFreeShipping: Joi.boolean().optional(),
+    style:Joi.string().optional(),
+    availableSizes:Joi.array().items(Joi.string().valid("S", "XS","M","X", "L","XXL", "XL")).optional(),
+    installments: Joi.number().optional(),
+    deletedAt: Joi.date(), 
+    isDeleted: Joi.boolean(),
+})
+
+module.exports={userJoi,loginJoi,updateJoi,isValidPinCode,productJoi}
 

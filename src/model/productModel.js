@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const productSchema = new mongooseSchema({
+const productSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
@@ -28,7 +28,7 @@ const productSchema = new mongooseSchema({
   },
   productImage: {
     type: String,
-    required: true,
+    // required: true,
   }, // s3 link
   style: { type: String },
   availableSizes: {
@@ -36,7 +36,7 @@ const productSchema = new mongooseSchema({
     enum: ["S", "XS", "M", "X", "L", "XXL", "XL"],
   },
   installments: { type: Number },
-  deletedAt: { type: Date },
+  deletedAt: { type: Date }, 
   isDeleted: {
     type: Boolean,
     default: false,

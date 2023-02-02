@@ -127,14 +127,18 @@ const userLogin = async function (req, res) {
    } catch (error) {
 	return res.status(500).send({ status: false, message: error.message})
     }
-            }
+    }
 
-//======================================update user===========================
+//======================================update user==============================
 
   const putData=async (req,res)=>{
  try {
 	   let userId=req.params.userId
 	    let data=req.body
+
+        if (Object.keys(data).length == 0) {
+            return res.status(400).send({ status: false, message: "Please Enter data in body in order to update it" })
+        }
 
             //parsing address
             if(data.address){
