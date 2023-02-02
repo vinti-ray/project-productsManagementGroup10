@@ -1,6 +1,8 @@
 const jwt=require("jsonwebtoken")
 const mongoose=require("mongoose")
 
+//=================authentication=======================================
+
 const authentication=async (req,res,next)=>{
     let token = req.headers["authorization"]
     if(!token) return res.status(400).send({status:false,message:"please enter token"})
@@ -18,7 +20,7 @@ const authentication=async (req,res,next)=>{
     })
      
 }
-
+//===========================authorisation===========================
 const authforGet=async (req,res,next)=>{
 
     let userId=req.params.userId

@@ -2,10 +2,12 @@ const userModel=require("../model/userModel")
 const aws=require("aws-sdk")
 const mongoose=require("mongoose")
 const jwt=require("jsonwebtoken")
-const {userJoi,loginJoi,updateJoi}=require("../validator/joiValidation")
+const {userJoi,loginJoi,updateJoi,isValidPinCode}=require("../validator/joiValidation")
 const bcrypt=require("bcrypt")
 const {uploadFile}=require("../aws/aws")
 const P = require('pincode-validator');
+const saltRounds = 10;   
+
 
 
 //===============================create user================================
@@ -25,10 +27,12 @@ try {
 	  const validation=await userJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message;return null})
 	  if(!validation) return res.status(400).send({  status: false,message: error})
 
+
       //please refer Postal Index Number on wikipedia for valid pin code
       let pincodeShipping=data.address.shipping.pincode
       let pincodeBilling=data.address.billing.pincode
-      if((!P.validate(pincodeShipping))||(!P.validate(pincodeBilling)))  return res.status(400).send({status: false,message:"pin code in shipping address or billing address  is not valid"})
+
+      if((!isValidPinCode(pincodeShipping))||(!isValidPinCode(pincodeBilling)))  return res.status(400).send({status: false,message:"pin code in shipping address or billing address  is not valid"})
 
 
 	
@@ -38,7 +42,7 @@ try {
 	    if(existingData.phone==data.phone.trim()) {return res.status(400).send({status:false,message:"phone already exist"})}
 	  }
 	
-	  const saltRounds = 10;           //check stackoverflow
+	          //check stackoverflow
 	  let password=data.password.trim()
 	
 	let encryptPassword =await bcrypt.hash(password, saltRounds)
@@ -126,24 +130,67 @@ const userLogin = async function (req, res) {
             }
 
 //======================================update user===========================
+
   const putData=async (req,res)=>{
  try {
 	   let userId=req.params.userId
 	    let data=req.body
 
+            //parsing address
+            if(data.address){
+                data.address=JSON.parse(data.address)
+
+              //pincode validation
+                if(data.address.shipping){
+                    if(data.address.shipping.pincode){
+                        if((!isValidPinCode(data.address.shipping.pincode))) return res.status(400).send({status: false,message:"pin code in shipping address is not valid"})
+                    }
+                }
+                if(data.address.billing){
+                    if(data.address.billing.pincode){
+                        if((!isValidPinCode(data.address.billing.pincode))) return res.status(400).send({status: false,message:"pin code in billing address is not valid"})
+                    } 
+                }
+
+            }
+          
+       
+
+        //joi validation
         let error
         const validation=await updateJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message;return null})
         if(!validation) return res.status(400).send({  status: false,message: error})
 
+        //unique email and phone
         if(data.email||data.phone){
             const existingData=await userModel.findOne({$or:[{email:data.email},{phone:data.phone}]})
             if(existingData){
-                if(existingData.email==data.email)  return res.status(400).send({status:false,message:"email is already in use"})
-                if(existingData.phone==data.phone)  return res.status(400).send({status:false,message:"phone is already in use"})
+                if(existingData.email==data.email.trim())  return res.status(400).send({status:false,message:"email is already in use"})
+                if(existingData.phone==data.phone.trim())  return res.status(400).send({status:false,message:"phone is already in use"})
             }
         }
-       console.log(data);
+
+        //password hashed
+        if(data.password){
+            let password=data.password.trim()
+	
+            let encryptPassword =await bcrypt.hash(password, saltRounds)
+            
+            data.password=encryptPassword
+        }
+
+        //image url
+        let fileUrl
+        let files=req.files
+        if(files&&files.length>0){
+            const uploadedFileURL=await uploadFile(files[0])
+            fileUrl=uploadedFileURL
+        }
+        data.profileImage=fileUrl
+       
+        //updation of data
 	    const updateData=await userModel.findByIdAndUpdate(userId,{$set:data},{new:true})
+
 	    return res.status(200).send({status:false,message:"User profile updated",data:updateData})
 } catch (error) {
 	return res.status(500).send({status:false,message:error.message})
@@ -156,15 +203,13 @@ const userLogin = async function (req, res) {
 module.exports={createUser,userLogin,getData,putData}
 
 
-// ## PUT /user/:userId/profile (Authentication and Authorization required)
-// - Allow an user to update their profile.
+
+//- Allow an user to update their profile.
 // - A user can update all the fields
 // - Make sure that userId in url param and in token is same
 // - __Response format__
 //   - _**On success**_ - Return HTTP status 200. Also return the updated user document. The response should be a JSON object like [this](#successful-response-structure)
 //   - _**On error**_ - Return a suitable error message with a valid HTTP status code. The response should be a JSON object like [this](#error-response-structure)
-// ```yaml
-
 
 
 
