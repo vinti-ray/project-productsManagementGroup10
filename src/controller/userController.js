@@ -5,6 +5,8 @@ const jwt=require("jsonwebtoken")
 const {userJoi,loginJoi,updateJoi}=require("../validator/joiValidation")
 const bcrypt=require("bcrypt")
 const {uploadFile}=require("../aws/aws")
+const P = require('pincode-validator');
+
 
 //===============================create user================================
 const createUser=async (req,res)=>{
@@ -15,13 +17,19 @@ try {
         data.address=JSON.parse(data.address)
 
         if (Object.keys(req.body).length == 0) {
-            return res.status(400).send({ status: false, message: "Please Enter email and password to LogIn" })
+            return res.status(400).send({ status: false, message: "Please Enter data in body" })
         }
 
 	
       let error
 	  const validation=await userJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message;return null})
 	  if(!validation) return res.status(400).send({  status: false,message: error})
+
+      //please refer Postal Index Number on wikipedia for valid pin code
+      let pincodeShipping=data.address.shipping.pincode
+      let pincodeBilling=data.address.billing.pincode
+      if((!P.validate(pincodeShipping))||(!P.validate(pincodeBilling)))  return res.status(400).send({status: false,message:"pin code in shipping address or billing address  is not valid"})
+
 
 	
 	  const existingData=await userModel.findOne({$or:[{email:data.email},{phone:data.phone}]})
@@ -62,18 +70,18 @@ try {
 
 const userLogin = async function (req, res) {
     try {
-        if (Object.keys(req.body).length == 0) {
-            return res.status(400).send({ status: false, message: "Please Enter email and password to LogIn" })
-        }
 
         let data=req.body
+        if (Object.keys(data).length == 0) {
+            return res.status(400).send({ status: false, message: "Please Enter email and password to LogIn" })
+        }
 
         let error
         const validation=await loginJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message;return null})
         if(!validation) return res.status(400).send({  status: false,message: error})
 
-        const email = req.body.email
-        const password = req.body.password
+        const { email , password } = data
+        
 
         const findUser = await userModel.findOne({ email })
 
@@ -106,15 +114,18 @@ const userLogin = async function (req, res) {
   //===================================## GET /user/:userId/profile ===================
 
   const getData=async (req,res)=>{
-      let userId=req.params.userId
+   try {
+	      let userId=req.params.userId
+	
+	       const findData=await userModel.findById(userId)
+	       if(!findData) return res.status(404).send({status:false,message:"no data found"})
+	       return res.status(200).send({status:true,message: "User profile details",data:findData})
+   } catch (error) {
+	return res.status(500).send({ status: false, message: error.message})
+    }
+            }
 
-       
-       const findData=await userModel.findById(userId)
-       if(!findData) return res.status(404).send({status:false,message:"no data found"})
-       return res.status(200).send({status:true,message: "User profile details",data:findData})
-  }
-
-
+//======================================update user===========================
   const putData=async (req,res)=>{
  try {
 	   let userId=req.params.userId
