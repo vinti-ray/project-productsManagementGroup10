@@ -113,5 +113,15 @@ const updateProductJoi=Joi.object({
     isDeleted: Joi.boolean(),
 })
 
-module.exports={userJoi,loginJoi,updateJoi,isValidPinCode,productJoi,updateProductJoi}
+//===================get product joi============================
+const getProductByQuery=Joi.object({
+    size:Joi.number().optional(),
+    name:Joi.string().optional(),
+    priceGreaterThan:Joi.number().optional(),
+    priceLessThan:Joi.number().optional(),
+    priceSort:Joi.number().valid(1,-1).optional()
+   // size, name, priceGreaterThan, priceLessThan, priceSort
+})
+
+module.exports={userJoi,loginJoi,updateJoi,isValidPinCode,productJoi,updateProductJoi,getProductByQuery}
 

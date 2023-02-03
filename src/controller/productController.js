@@ -1,6 +1,6 @@
 const productModel=require("../model/productModel")
 const {uploadFile}=require("../aws/aws")
-const {productJoi,updateProductJoi, updateJoi}=require("../validator/joiValidation")
+const {productJoi,updateProductJoi,getProductByQuery}=require("../validator/joiValidation")
 const userModel = require("../model/userModel")
 const { default: mongoose } = require("mongoose")
 const { json } = require("express")
@@ -68,14 +68,23 @@ const getProduct = async (req,res)=>{
     let data = req.query
     let { size, name, priceGreaterThan, priceLessThan, priceSort,...rest} = data
 
-    if(Object.keys(rest).length > 0) return res.status(400).send({status: false, message: "You can filter only by size, name, priceGreaterThan, priceLessThan, priceSort "})
+    // let error
+    // let validaiton
+
+    
 
     let filter = {isDeleted:false}
 
     if(size){
            size=size.split(",");
-            filter.availableSizes = {$in:size} ///check whether it will apply on product creation time
-
+           //enum validaiton
+           let enumValue =["S", "XS","M","X", "L","XXL", "XL"] 
+           for (let i of size){
+               if(!enumValue.includes(i)){
+                   return res.status(400).send({status:false,message:`availableSizes can be only from "S", "XS","M","X", "L","XXL", "XL" these`})
+               }
+               }
+            filter.availableSizes = {$in:size} 
     }
 
 
@@ -98,6 +107,9 @@ const getProduct = async (req,res)=>{
     }
 
     let getData= await productModel.find(filter).sort(sortProduct)
+  
+
+    if(getData.length==0) return res.status(404).send({status:false,message:"no data found"})
 
     res.status(200).send({status:true, message:"Success", data: getData })
     }
@@ -132,9 +144,11 @@ const getProductbyId = async function (req, res) {
 
 //===========================product update================================
 const updateProduct=async (req,res)=>{
-    let productId=req.params.productId
+    let productId=req.params.productId 
     let data=req.body
-    
+    let files=req.files
+       //when no data provided
+
 
     //validProductId
     if(!mongoose.isValidObjectId(productId)) return res.status(400).send({status:false,message:"productId in param is not a valid product id"})
@@ -154,7 +168,6 @@ const updateProduct=async (req,res)=>{
 
    //imageurl
 
-   let files=req.files
    if(files&&files.length>0){
     let imageUrl=await uploadFile(files[0])
     data.productImage=imageUrl
@@ -178,6 +191,8 @@ const updateProduct=async (req,res)=>{
 
    }
 
+   console.log(data);
+   if(Object.keys(data).length==0) return res.status(400).send({status:false,message:"please enter atleast one field in order to update it"})
 
     const updatedData=await productModel.findByIdAndUpdate(productId,{$set:data},{new:true})
     return res.status(200).send({status:true,message:"successfully updated",data:updatedData})
