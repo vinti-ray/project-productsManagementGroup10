@@ -1,8 +1,9 @@
 const productModel=require("../model/productModel")
 const {uploadFile}=require("../aws/aws")
-const {productJoi}=require("../validator/joiValidation")
+const {productJoi,updateProductJoi, updateJoi}=require("../validator/joiValidation")
 const userModel = require("../model/userModel")
 const { default: mongoose } = require("mongoose")
+const { json } = require("express")
 
 //=======================create Product===============================
 
@@ -58,8 +59,11 @@ const getProduct = async (req,res)=>{
     let filter = {isDeleted:false}
 
     if(size){
-        filter.availableSizes = size
+           size=size.split(",");
+            filter.availableSizes = {$in:size} ///check whether it will apply on product creation time
+
     }
+
 
     if(name){
          filter.title = name
@@ -73,6 +77,7 @@ const getProduct = async (req,res)=>{
         filter.price = {$lt:priceLessThan}
     }
 
+    console.log(filter.price);
     let sortProduct
     if(priceSort){
         sortProduct = {price: priceSort}
@@ -111,6 +116,53 @@ const getProductbyId = async function (req, res) {
     }
 };
 
+//===========================product update================================
+const updateProduct=async (req,res)=>{
+    let productId=req.params.productId
+    let data=req.body
+    
+
+    //validProductId
+    if(!mongoose.isValidObjectId(productId)) return res.status(400).send({status:false,message:"productId in param is not a valid product id"})
+
+    //joiValidation
+    let error
+    const validation=await updateProductJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message ; return null})
+    if(!validation) return res.status(400).send({status:false,message:error})
+
+    //exist product id
+    const existProduct=await productModel.findOne({_id:productId,isDeleted:false})
+    if(!existProduct) return res.status(404).send({status:false,message:"no product found with this product id"})
+    
+    //uniqueTitle
+    const titleExist=await productModel.findOne({title:data.title,isDeleted:false})
+    if(titleExist) return res.status(400).send({status:false,message:"title already in use please use another one"})
+
+   //imageurl
+
+   let files=req.files
+   if(files&&files.length>0){
+    let imageUrl=await uploadFile(files[0])
+    data.productImage=imageUrl
+   }
+
+   //availableSizes in array
+   if(data.availableSizes){
+    data.availableSizes=data.availableSizes.split(",");
+   }
+  console.log(data.availableSizes);
+
+    const updatedData=await productModel.findByIdAndUpdate(productId,{$set:data},{new:true})
+    return res.status(200).send({status:true,message:"successfully updated",data:updatedData})
+}
+
+// ### PUT /products/:productId
+// - Updates a product by changing at least one or all fields
+// - Check if the productId exists (must have isDeleted false and is present in collection). If it doesn't, return an HTTP status 404 with a response body like [this](#error-response-structure)
+// - __Response format__
+//   - _**On success**_ - Return HTTP status 200. Also return the updated product document. The response should be a JSON object like [this](#successful-response-structure)
+//   - _**On error**_ - Return a suitable error message with a valid HTTP status code. The response should be a JSON object like [this](#error-response-structure)
+
 //=========================delete product===========================
 const deleteProductbyId = async function (req, res) {
     try {
@@ -133,6 +185,6 @@ const deleteProductbyId = async function (req, res) {
 };
 
 
-module.exports={createProduct,getProduct,getProductbyId,deleteProductbyId}
+module.exports={createProduct,getProduct,getProductbyId,updateProduct,deleteProductbyId}
 
 

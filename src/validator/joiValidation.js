@@ -97,5 +97,21 @@ const productJoi=Joi.object({
     isDeleted: Joi.boolean(),
 })
 
-module.exports={userJoi,loginJoi,updateJoi,isValidPinCode,productJoi}
+//=============================update Product======================
+
+const updateProductJoi=Joi.object({
+    title: Joi.string().optional(),
+    description:Joi.string().optional(),
+    price:Joi.number().optional(),
+    currencyId:Joi.string().optional().valid("INR"),
+    currencyFormat: Joi.string().optional().valid("₹"),
+    isFreeShipping: Joi.boolean().optional(),
+    style:Joi.string().optional(),
+    availableSizes:Joi.string().valid("S", "XS","M","X", "L","XXL", "XL").optional(),
+    installments: Joi.number().optional(),
+    deletedAt: Joi.date(), 
+    isDeleted: Joi.boolean(),
+})
+
+module.exports={userJoi,loginJoi,updateJoi,isValidPinCode,productJoi,updateProductJoi}
 
