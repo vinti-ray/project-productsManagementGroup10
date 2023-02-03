@@ -12,6 +12,7 @@ const uploadFile = async (files) => {
 
 
         let s3 = new aws.S3({ apiVersion: '2006-03-01' }); 
+     
 
 
         let uploadParams = {
@@ -28,6 +29,7 @@ const uploadFile = async (files) => {
             }
 
             console.log("file uploaded succesfully")
+
          
             return resolve(data.Location)
         })

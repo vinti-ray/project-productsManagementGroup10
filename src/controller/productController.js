@@ -4,6 +4,8 @@ const {productJoi}=require("../validator/joiValidation")
 const userModel = require("../model/userModel")
 const { default: mongoose } = require("mongoose")
 
+//=======================create Product===============================
+
 const createProduct=async (req,res)=>{
     let data=req.body              //check for data type
 
@@ -37,9 +39,10 @@ const createProduct=async (req,res)=>{
 
   
 
-    delete createProduct["__V"]
+   
+    console.log(createProduct);
 
-   return res.status(201).send({status:true,message:"success",data:responseData})
+   return res.status(201).send({status:true,message:"success",data:createProduct})
 
 
 }
@@ -116,6 +119,9 @@ const deleteProductbyId = async function (req, res) {
             return res.status(400).send({ status: false, message: "productId is required" });
         }
        
+        //valid product id validation
+        if(!mongoose.isValidObjectId(productId)) return res.status(400).send({status:false,message:"product id is not valid"})
+
         const product = await productModel.findOneAndUpdate({ _id: productId, isDeleted: false }, { isDeleted: true, deletedAt: new Date() }, { new: true });
         if (!product) {
             return res.status(404).send({ status: true, message: "product not found " });
@@ -129,24 +135,4 @@ const deleteProductbyId = async function (req, res) {
 
 module.exports={createProduct,getProduct,getProductbyId,deleteProductbyId}
 
-// - Create a product document from request body.
-// - Upload product image to S3 bucket and save image public url in document.
-// - __Response format__
-//   - _**On success**_ - Return HTTP status 201. Also return the product document. The response should be a JSON object like [this](#successful-response-structure)
-//   - _**On error**_ - Return a suitable error message with a valid HTTP status code. The response should be a JSON object like [this](#error-response-structure)
 
-// ### GET /products
-// - Returns all products in the collection that aren't deleted.
-// - __Filters__
-//   - Size (The key for this filter will be 'size')
-//   - Product name (The key for this filter will be 'name'). You should return all the products with name containing the substring recieved in this filter
-//   - Price : greater than or less than a specific value. The keys are 'priceGreaterThan' and 'priceLessThan'. 
-  
-// > **_NOTE:_** For price filter request could contain both or any one of the keys. For example the query in the request could look like { priceGreaterThan: 500, priceLessThan: 2000 } or just { priceLessThan: 1000 } )
-  
-// - __Sort__
-//   - Sorted by product price in ascending or descending. The key value pair will look like {priceSort : 1} or {priceSort : -1}
-// _eg_ /products?size=XL&name=Nit%20grit
-// - __Response format__
-// - _**On success**_ - Return HTTP status 200. Also return the product documents. The response should be a JSON object like [this](#successful-response-structure)
-// - _**On error**_ - Return a suitable error message with a valid HTTP status code. The response should be a JSON object like [this](#error-response-structure)

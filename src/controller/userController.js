@@ -28,7 +28,7 @@ try {
 	  if(!validation) return res.status(400).send({  status: false,message: error})
 
 
-      //please refer Postal Index Number on wikipedia for valid pin code
+
       let pincodeShipping=data.address.shipping.pincode
       let pincodeBilling=data.address.billing.pincode
 
@@ -136,11 +136,11 @@ const userLogin = async function (req, res) {
 	   let userId=req.params.userId
 	    let data=req.body
 
-        if (Object.keys(data).length == 0) {
-            return res.status(400).send({ status: false, message: "Please Enter data in body in order to update it" })
-        }
-
             //parsing address
+      const findData=await userModel.findById(userId).lean()
+      if(!findData) return res.status(404).send({status:false,message:"no user found with this user id"})
+
+
             if(data.address){
                 data.address=JSON.parse(data.address)
 
@@ -148,13 +148,29 @@ const userLogin = async function (req, res) {
                 if(data.address.shipping){
                     if(data.address.shipping.pincode){
                         if((!isValidPinCode(data.address.shipping.pincode))) return res.status(400).send({status: false,message:"pin code in shipping address is not valid"})
+                        findData.address.shipping.pincode=data.address.shipping.pincode
+                    }
+                    if(data.address.shipping.city){
+                        findData.address.shipping.city=data.address.shipping.city
+                    }
+                    if(data.address.shipping.street){
+                        findData.address.shipping.street=data.address.shipping.street
                     }
                 }
                 if(data.address.billing){
                     if(data.address.billing.pincode){
                         if((!isValidPinCode(data.address.billing.pincode))) return res.status(400).send({status: false,message:"pin code in billing address is not valid"})
+                        findData.address.billing.pincode=data.address.billing.pincode
                     } 
+                    if(data.address.billing.city){
+                        findData.address.billing.city=data.address.billing.city
+                    }
+                    if(data.address.billing.street){
+                        findData.address.billing.street=data.address.billing.street
+                    }
                 }
+                
+                data.address=findData.address
 
             }
           
@@ -184,21 +200,27 @@ const userLogin = async function (req, res) {
         }
 
         //image url
-        let fileUrl
+   
         let files=req.files
         if(files&&files.length>0){
             const uploadedFileURL=await uploadFile(files[0])
-            fileUrl=uploadedFileURL
+            data.profileImage=uploadedFileURL
         }
-        data.profileImage=fileUrl
+
+
+         if (Object.keys(data).length == 0) {
+          return res.status(400).send({ status: false, message: "Please Enter data in body in order to update it" })
+        }
        
         //updation of data
-	    const updateData=await userModel.findByIdAndUpdate(userId,{$set:data},{new:true})
+	    const updateData=await userModel.findByIdAndUpdate(userId,{$set:{...data}},{new:true})
+        console.log(updateData);
 
 	    return res.status(200).send({status:false,message:"User profile updated",data:updateData})
 } catch (error) {
 	return res.status(500).send({status:false,message:error.message})
 }
+
 
   }
 
