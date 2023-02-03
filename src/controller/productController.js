@@ -10,15 +10,29 @@ const { json } = require("express")
 const createProduct=async (req,res)=>{
     let data=req.body              //check for data type
 
-   if(data.availableSizes){
-    data.availableSizes=JSON.parse(data.availableSizes)
-   }
+
    
     //validation
 
     let error
     const validation=await productJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message;return null})
     if(!validation) return res.status(400).send({status:false,message:error})
+
+    //availablesize
+
+    if(data.availableSizes){
+   
+        data.availableSizes=data.availableSizes.split(",");
+        let availableSizes=data.availableSizes
+        //enum validaiton
+        let enumValue =["S", "XS","M","X", "L","XXL", "XL"] 
+        for (let i of availableSizes){
+            if(!enumValue.includes(i)){
+                return res.status(400).send({status:false,message:`availableSizes can be only from "S", "XS","M","X", "L","XXL", "XL" these`})
+            }
+            }
+            data.availableSizes=availableSizes
+       }
 
     //unique value
     const existingTitle=await productModel.findOne({title:data.title,isDeleted:false})
@@ -147,10 +161,23 @@ const updateProduct=async (req,res)=>{
    }
 
    //availableSizes in array
+
    if(data.availableSizes){
+
     data.availableSizes=data.availableSizes.split(",");
+    let availableSizes=data.availableSizes
+    let enumValue =["S", "XS","M","X", "L","XXL", "XL"] 
+
+    for (let i of availableSizes) {
+        if(!enumValue.includes(i)){
+            return res.status(400).send({status:false,message:`availableSizes can be only from "S", "XS","M","X", "L","XXL", "XL" these`})
+        }
+        }
+
+      data.availableSizes=availableSizes
+
    }
-  console.log(data.availableSizes);
+
 
     const updatedData=await productModel.findByIdAndUpdate(productId,{$set:data},{new:true})
     return res.status(200).send({status:true,message:"successfully updated",data:updatedData})
