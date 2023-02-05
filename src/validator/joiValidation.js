@@ -11,6 +11,8 @@ const userJoi=Joi.object({
     email:Joi.string().trim().required().regex(/^[A-Za-z0-9._]{3,}@[A-Za-z]{3,}[.]{1,}[A-Za-z.]{2,8}$/).
     message("please enter valid email"),
 
+    profileImage:Joi.required(),
+
     phone:Joi.string().trim().required().regex(/^[5-9]{1}[0-9]{9}$/).message("please enter valid mobile number"),
 
     password:Joi.string().trim().required().min(8).max(15),
@@ -18,16 +20,16 @@ const userJoi=Joi.object({
     address:Joi.object({
         shipping:Joi.object({
             street:Joi.string().trim().required(),
-            city:Joi.string().required(),
+            city:Joi.string().trim().required(),
             pincode:Joi.number().strict().required()
         }),
 
         billing:Joi.object({
-            street:Joi.string().required(),
-            city:Joi.string().required(),
+            street:Joi.string().trim().required(),
+            city:Joi.string().trim().required(),
             pincode:Joi.number().strict().required() //Joi.string().required().regex(/^[0-9]+$/).cast('number');
         })
-    }),
+    }).required(),
 
 })
 
@@ -35,36 +37,36 @@ const userJoi=Joi.object({
 //=====================login joi=================
 
 const loginJoi=Joi.object({
-    email:Joi.string().required().regex(/^[A-Za-z0-9._]{3,}@[A-Za-z]{3,}[.]{1,}[A-Za-z.]{2,8}$/).
+    email:Joi.string().trim().required().regex(/^[A-Za-z0-9._]{3,}@[A-Za-z]{3,}[.]{1,}[A-Za-z.]{2,8}$/).
     message("please enter valid email"),
-    password:Joi.string().required().min(8).max(15)
+    password:Joi.string().trim().required().min(8).max(15)
 })
 
 
 
 //===================update user joi================
 const updateJoi=Joi.object({
-    fname:Joi.string().optional(),
+    fname:Joi.string().trim().optional(),
 
-    lname:Joi.string().optional(),
+    lname:Joi.string().trim().optional(),
 
-    email:Joi.string().optional().regex(/^[A-Za-z0-9._]{3,}@[A-Za-z]{3,}[.]{1,}[A-Za-z.]{2,8}$/).
+    email:Joi.string().trim().optional().regex(/^[A-Za-z0-9._]{3,}@[A-Za-z]{3,}[.]{1,}[A-Za-z.]{2,8}$/).
     message("please enter valid email"),
 
-    phone:Joi.string().optional().regex(/^[5-9]{1}[0-9]{9}$/).message("please enter valid mobile number"),
+    phone:Joi.string().trim().optional().regex(/^[5-9]{1}[0-9]{9}$/).message("please enter valid mobile number"),
 
-    password:Joi.string().optional().min(8).max(15),
+    password:Joi.string().trim().optional().min(8).max(15),
 
     address:Joi.object({
         shipping:Joi.object({
-            street:Joi.string().optional(),
-            city:Joi.string().optional(),
+            street:Joi.string().trim().optional(),
+            city:Joi.string().trim().optional(),
             pincode:Joi.number().strict().optional()
         }),
 
         billing:Joi.object({
-            street:Joi.string().optional(),
-            city:Joi.string().optional(),
+            street:Joi.string().trim().optional(),
+            city:Joi.string().trim().optional(),
             pincode:Joi.number().strict().optional()
 
         })
@@ -84,14 +86,16 @@ const isValidPinCode = (value) => {
 
 //==========================create Product joi===========================
 const productJoi=Joi.object({
-    title: Joi.string().required(),
-    description:Joi.string().required(),
+    title: Joi.string().trim().required(),
+    description:Joi.string().trim().required(),
     price:Joi.number().required(),
-    currencyId:Joi.string().required().valid("INR"),
-    currencyFormat: Joi.string().required().valid("₹"),
+
+    currencyId:Joi.string().trim().required().valid("INR"),
+    currencyFormat: Joi.string().trim().required().valid("₹"),
     isFreeShipping: Joi.boolean().optional(),
-    style:Joi.string().optional(),
-    availableSizes:Joi.string().optional(),
+    productImage:Joi.required(),
+    style:Joi.string().trim().optional(),
+    availableSizes:Joi.string().trim().optional(),
     installments: Joi.number().optional(),
     deletedAt: Joi.date(), 
     isDeleted: Joi.boolean(),
@@ -115,7 +119,7 @@ const updateProductJoi=Joi.object({
 
 //===================get product joi============================
 const getProductByQuery=Joi.object({
-    size:Joi.number().optional(),
+    size:Joi.string().optional(),
     name:Joi.string().optional(),
     priceGreaterThan:Joi.number().optional(),
     priceLessThan:Joi.number().optional(),
@@ -123,5 +127,10 @@ const getProductByQuery=Joi.object({
    // size, name, priceGreaterThan, priceLessThan, priceSort
 })
 
+
+//==================create cart joi =====================
+// const cartJoi=Joi.object({
+
+// })
 module.exports={userJoi,loginJoi,updateJoi,isValidPinCode,productJoi,updateProductJoi,getProductByQuery}
 

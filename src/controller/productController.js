@@ -9,9 +9,14 @@ const { json } = require("express")
 
 const createProduct=async (req,res)=>{
     let data=req.body              //check for data type
+    let files=req.files
+    if (files&&files.length!=0) {
+        data.productImage=files
+    }
 
-
-   
+    if (Object.keys(req.body).length == 0) {
+        return res.status(400).send({ status: false, message: "Please Enter data in body" })
+         }
     //validation
 
     let error
@@ -20,42 +25,43 @@ const createProduct=async (req,res)=>{
 
     //availablesize
 
-    if(data.availableSizes){
-   
-        data.availableSizes=data.availableSizes.split(",");
-        let availableSizes=data.availableSizes
+    if (data.availableSizes) {
+
+        data.availableSizes = data.availableSizes.split(",");
+        let availableSizes = data.availableSizes
         //enum validaiton
-        let enumValue =["S", "XS","M","X", "L","XXL", "XL"] 
-        for (let i of availableSizes){
-            if(!enumValue.includes(i)){
-                return res.status(400).send({status:false,message:`availableSizes can be only from "S", "XS","M","X", "L","XXL", "XL" these`})
+        let enumValue = ["S", "XS", "M", "X", "L", "XXL", "XL"]
+
+        let unique =[]
+        for(let i = 0; i <availableSizes.length;i++){
+            availableSizes[i]=availableSizes[i].toUpperCase()
+            if (unique.indexOf(availableSizes[i]) == -1){
+                if(enumValue.includes(availableSizes[i])){
+                    unique.push(availableSizes[i])
+                } else{ return res.status(400).send({ status: false, message: `availableSizes can be only from "S", "XS","M","X", "L","XXL", "XL" these` })}
             }
-            }
-            data.availableSizes=availableSizes
-       }
+        }
+
+        data.availableSizes = unique
+
+    }
+
 
     //unique value
     const existingTitle=await productModel.findOne({title:data.title,isDeleted:false})
     if(existingTitle) return res.status(400).send({status:false,message:"title already exist please enter another one"})
 
     //aws s3
-    let files=req.files
-    let fileUrl
+
     if(files&&files.length>0){
         let uploadImage=await uploadFile(files[0])
-    fileUrl=uploadImage
-    }else{
-        return res.status(400).send({satatus:false,message:"please upload image"})
+        data.productImage=uploadImage
     }
-  data.productImage=fileUrl
+
     //data creation
 
     const createProduct=await productModel.create(data)
 
-  
-
-   
-    console.log(createProduct);
 
    return res.status(201).send({status:true,message:"success",data:createProduct})
 
@@ -66,10 +72,12 @@ const createProduct=async (req,res)=>{
 const getProduct = async (req,res)=>{
     try{
     let data = req.query
-    let { size, name, priceGreaterThan, priceLessThan, priceSort,...rest} = data
+    let { size, name, priceGreaterThan, priceLessThan, priceSort} = data
 
-    // let error
-    // let validaiton
+    let error
+    let validaiton=await getProductByQuery.validateAsync(data).then(()=>true).catch((err)=>{error=err.message;return false})
+
+    if(!validaiton) return res.status(400).send({status:false,message:error})
 
     
 
@@ -80,11 +88,14 @@ const getProduct = async (req,res)=>{
            //enum validaiton
            let enumValue =["S", "XS","M","X", "L","XXL", "XL"] 
            for (let i of size){
+            i=i.toUpperCase()
                if(!enumValue.includes(i)){
                    return res.status(400).send({status:false,message:`availableSizes can be only from "S", "XS","M","X", "L","XXL", "XL" these`})
                }
                }
-            filter.availableSizes = {$in:size} 
+            let sizeNew=size.map(a=>a.toUpperCase())
+
+            filter.availableSizes = {$in:sizeNew} 
     }
 
 
@@ -100,7 +111,7 @@ const getProduct = async (req,res)=>{
         filter.price = {$lt:priceLessThan}
     }
 
-    console.log(filter.price);
+   
     let sortProduct
     if(priceSort){
         sortProduct = {price: priceSort}
@@ -166,6 +177,31 @@ const updateProduct=async (req,res)=>{
     const titleExist=await productModel.findOne({title:data.title,isDeleted:false})
     if(titleExist) return res.status(400).send({status:false,message:"title already in use please use another one"})
 
+
+
+   //availableSizes in array
+
+   if (data.availableSizes) {
+
+    data.availableSizes = data.availableSizes.split(",");
+    let availableSizes = data.availableSizes
+    //enum validaiton
+    let enumValue = ["S", "XS", "M", "X", "L", "XXL", "XL"]
+
+    let unique =[]
+    for(let i = 0; i <availableSizes.length;i++){
+        availableSizes[i]=availableSizes[i].toUpperCase()
+        if (unique.indexOf(availableSizes[i]) == -1){
+            if(enumValue.includes(availableSizes[i])){
+                unique.push(availableSizes[i])
+            } else{ return res.status(400).send({ status: false, message: `availableSizes can be only from "S", "XS","M","X", "L","XXL", "XL" these` })}
+        }
+    }
+
+    data.availableSizes = unique
+
+}
+
    //imageurl
 
    if(files&&files.length>0){
@@ -173,37 +209,14 @@ const updateProduct=async (req,res)=>{
     data.productImage=imageUrl
    }
 
-   //availableSizes in array
 
-   if(data.availableSizes){
-
-    data.availableSizes=data.availableSizes.split(",");
-    let availableSizes=data.availableSizes
-    let enumValue =["S", "XS","M","X", "L","XXL", "XL"] 
-
-    for (let i of availableSizes) {
-        if(!enumValue.includes(i)){
-            return res.status(400).send({status:false,message:`availableSizes can be only from "S", "XS","M","X", "L","XXL", "XL" these`})
-        }
-        }
-
-      data.availableSizes=availableSizes
-
-   }
-
-   console.log(data);
    if(Object.keys(data).length==0) return res.status(400).send({status:false,message:"please enter atleast one field in order to update it"})
 
     const updatedData=await productModel.findByIdAndUpdate(productId,{$set:data},{new:true})
     return res.status(200).send({status:true,message:"successfully updated",data:updatedData})
 }
 
-// ### PUT /products/:productId
-// - Updates a product by changing at least one or all fields
-// - Check if the productId exists (must have isDeleted false and is present in collection). If it doesn't, return an HTTP status 404 with a response body like [this](#error-response-structure)
-// - __Response format__
-//   - _**On success**_ - Return HTTP status 200. Also return the updated product document. The response should be a JSON object like [this](#successful-response-structure)
-//   - _**On error**_ - Return a suitable error message with a valid HTTP status code. The response should be a JSON object like [this](#error-response-structure)
+
 
 //=========================delete product===========================
 const deleteProductbyId = async function (req, res) {

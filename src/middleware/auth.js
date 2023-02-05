@@ -25,9 +25,11 @@ const authforGet=async (req,res,next)=>{
 
     let userId=req.params.userId
 
+    //do we need a db call here??
+
     if(!mongoose.isValidObjectId(userId))  return res.status(400).send({status:false,message:"userId is not valid"})
 
-    if(req.decode.userId!==userId) return res.status(403).send({status:false,message:"you are not authorised to get the data"})
+    if(req.decode.userId!==userId) return res.status(403).send({status:false,message:"you are not authorised "})
     next()
 }
 

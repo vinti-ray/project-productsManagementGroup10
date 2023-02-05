@@ -25,11 +25,11 @@ const productSchema = new mongoose.Schema(
     },
     isFreeShipping: {
       type: Boolean,
-      default: false,
+      default: false, 
     },
-    productImage: {
+    productImage: { 
       type: String,
-      // required: true,
+      required: true,
     }, // s3 link
     style: { type: String },
     availableSizes: {

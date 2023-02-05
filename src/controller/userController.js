@@ -12,22 +12,29 @@ const saltRounds = 10;
 
 //===============================create user================================
 const createUser=async (req,res)=>{
-try {
+    try {
+        
+        let data=req.body
+        let files= req.files
 
-	    let data=req.body
-     
-        data.address=JSON.parse(data.address)
+        if (files&&files.length!=0) {
+            data.profileImage=files
+        }
 
         if (Object.keys(req.body).length == 0) {
             return res.status(400).send({ status: false, message: "Please Enter data in body" })
         }
 
-	
-      let error
-	  const validation=await userJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message;return null})
-	  if(!validation) return res.status(400).send({  status: false,message: error})
+
+      if(data.address){
+        data.address=JSON.parse(data.address)
+      }
 
 
+        let error
+        const validation=await userJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message;return null})
+        if(!validation) return res.status(400).send({  status: false,message: error})
+        
 
       let pincodeShipping=data.address.shipping.pincode
       let pincodeBilling=data.address.billing.pincode
@@ -48,20 +55,16 @@ try {
 	let encryptPassword =await bcrypt.hash(password, saltRounds)
 	
 	data.password=encryptPassword
-	
-	//==============aws s3==================
-       let profileUrl
-       let files= req.files
-       if(files && files.length>0){ 
 
-           let uploadedFileURL= await uploadFile( files[0] )
-           profileUrl=uploadedFileURL
-       }
-       else{
-          return res.status(400).send({status:false, message: "No file found" })
-       }
-       
-      data.profileImage=profileUrl
+        //==============aws s3==================
+
+
+    if(files && files.length>0){ 
+ 
+        let uploadedFileURL= await uploadFile( files[0] )
+        data.profileImage=uploadedFileURL
+    }
+	
 
 	  const createData=await userModel.create(data)
 	  return res.status(201).send({status:true,message: "User created successfully",data:createData})
@@ -76,6 +79,7 @@ const userLogin = async function (req, res) {
     try {
 
         let data=req.body
+
         if (Object.keys(data).length == 0) {
             return res.status(400).send({ status: false, message: "Please Enter email and password to LogIn" })
         }
@@ -84,8 +88,8 @@ const userLogin = async function (req, res) {
         const validation=await loginJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message;return null})
         if(!validation) return res.status(400).send({  status: false,message: error})
 
-        const { email , password } = data
-        
+        let { email , password } = data
+        password=password.trim()
 
         const findUser = await userModel.findOne({ email })
 
@@ -106,7 +110,7 @@ const userLogin = async function (req, res) {
             return res.status(200).send({ status: true, message: "User login successfull, token will be valid for 30 Minute", data: { userId: findUser._id, token } })
         }
         else {
-            return res.status(404).send({ status: false, message: `Password is wrong for this email: ${email}` })
+            return res.status(400).send({ status: false, message: `Password is wrong for this email: ${email}` })
         }
     }
     catch (error) {
@@ -212,7 +216,7 @@ const userLogin = async function (req, res) {
           return res.status(400).send({ status: false, message: "Please Enter data in body in order to update it" })
         }
        
-        //updation of data
+
 	    const updateData=await userModel.findByIdAndUpdate(userId,{$set:{...data}},{new:true})
         console.log(updateData);
 
