@@ -22,13 +22,13 @@ const userJoi=Joi.object({
             street:Joi.string().trim().required(),
             city:Joi.string().trim().required(),
             pincode:Joi.number().strict().required()
-        }),
+        }).required(),
 
         billing:Joi.object({
             street:Joi.string().trim().required(),
             city:Joi.string().trim().required(),
             pincode:Joi.number().strict().required() //Joi.string().required().regex(/^[0-9]+$/).cast('number');
-        })
+        }).required()
     }).required(),
 
 })

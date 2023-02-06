@@ -29,6 +29,7 @@ const createUser=async (req,res)=>{
       if(data.address){
         data.address=JSON.parse(data.address)
       }
+      
 
 
         let error

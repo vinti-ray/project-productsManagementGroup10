@@ -71,10 +71,10 @@ const createCart = async (req, res) => {
 
             let newCart = {
                 userId: userId,
-                items: [{
+                items: {
                     productId: productId,
-                    quantity: 1
-                }],
+                    quantity: 1 
+                },
                 totalPrice: productData.price,
                 totalItems: 1
             }
