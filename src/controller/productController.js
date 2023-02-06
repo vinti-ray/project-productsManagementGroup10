@@ -8,62 +8,66 @@ const { json } = require("express")
 //=======================create Product===============================
 
 const createProduct=async (req,res)=>{
-    let data=req.body              //check for data type
-    let files=req.files
-    if (files&&files.length!=0) {
-        data.productImage=files
-    }
-
-    if (Object.keys(req.body).length == 0) {
-        return res.status(400).send({ status: false, message: "Please Enter data in body" })
-         }
-    //validation
-
-    let error
-    const validation=await productJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message;return null})
-    if(!validation) return res.status(400).send({status:false,message:error})
-
-    //availablesize
-
-    if (data.availableSizes) {
-
-        data.availableSizes = data.availableSizes.split(",");
-        let availableSizes = data.availableSizes
-        //enum validaiton
-        let enumValue = ["S", "XS", "M", "X", "L", "XXL", "XL"]
-
-        let unique =[]
-        for(let i = 0; i <availableSizes.length;i++){
-            availableSizes[i]=availableSizes[i].toUpperCase()
-            if (unique.indexOf(availableSizes[i]) == -1){
-                if(enumValue.includes(availableSizes[i])){
-                    unique.push(availableSizes[i])
-                } else{ return res.status(400).send({ status: false, message: `availableSizes can be only from "S", "XS","M","X", "L","XXL", "XL" these` })}
-            }
+try {
+        let data=req.body              //check for data type
+        let files=req.files
+        if (files&&files.length!=0) {
+            data.productImage=files
         }
-
-        data.availableSizes = unique
-
-    }
-
-
-    //unique value
-    const existingTitle=await productModel.findOne({title:data.title,isDeleted:false})
-    if(existingTitle) return res.status(400).send({status:false,message:"title already exist please enter another one"})
-
-    //aws s3
-
-    if(files&&files.length>0){
-        let uploadImage=await uploadFile(files[0])
-        data.productImage=uploadImage
-    }
-
-    //data creation
-
-    const createProduct=await productModel.create(data)
-
-
-   return res.status(201).send({status:true,message:"success",data:createProduct})
+    
+        if (Object.keys(req.body).length == 0) {
+            return res.status(400).send({ status: false, message: "Please Enter data in body" })
+             }
+        //validation
+    
+        let error
+        const validation=await productJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message;return null})
+        if(!validation) return res.status(400).send({status:false,message:error})
+    
+        //availablesize
+    
+        if (data.availableSizes) {
+    
+            data.availableSizes = data.availableSizes.split(",");
+            let availableSizes = data.availableSizes
+            //enum validaiton
+            let enumValue = ["S", "XS", "M", "X", "L", "XXL", "XL"]
+    
+            let unique =[]
+            for(let i = 0; i <availableSizes.length;i++){
+                availableSizes[i]=availableSizes[i].toUpperCase()
+                if (unique.indexOf(availableSizes[i]) == -1){
+                    if(enumValue.includes(availableSizes[i])){
+                        unique.push(availableSizes[i])
+                    } else{ return res.status(400).send({ status: false, message: `availableSizes can be only from "S", "XS","M","X", "L","XXL", "XL" these` })}
+                }
+            }
+    
+            data.availableSizes = unique
+    
+        }
+    
+    
+        //unique value
+        const existingTitle=await productModel.findOne({title:data.title,isDeleted:false})
+        if(existingTitle) return res.status(400).send({status:false,message:"title already exist please enter another one"})
+    
+        //aws s3
+    
+        if(files&&files.length>0){
+            let uploadImage=await uploadFile(files[0])
+            data.productImage=uploadImage
+        }
+    
+        //data creation
+    
+        const createProduct=await productModel.create(data)
+    
+    
+       return res.status(201).send({status:true,message:"success",data:createProduct})
+} catch (error) {
+    return res.status(500).send({status:false,message:error.message})
+}
 
 
 }
@@ -155,65 +159,69 @@ const getProductbyId = async function (req, res) {
 
 //===========================product update================================
 const updateProduct=async (req,res)=>{
-    let productId=req.params.productId 
-    let data=req.body
-    let files=req.files
-       //when no data provided
-
-
-    //validProductId
-    if(!mongoose.isValidObjectId(productId)) return res.status(400).send({status:false,message:"productId in param is not a valid product id"})
-
-    //joiValidation
-    let error
-    const validation=await updateProductJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message ; return null})
-    if(!validation) return res.status(400).send({status:false,message:error})
-
-    //exist product id
-    const existProduct=await productModel.findOne({_id:productId,isDeleted:false})
-    if(!existProduct) return res.status(404).send({status:false,message:"no product found with this product id"})
+try {
+        let productId=req.params.productId 
+        let data=req.body
+        let files=req.files
+           //when no data provided
     
-    //uniqueTitle
-    const titleExist=await productModel.findOne({title:data.title,isDeleted:false})
-    if(titleExist) return res.status(400).send({status:false,message:"title already in use please use another one"})
-
-
-
-   //availableSizes in array
-
-   if (data.availableSizes) {
-
-    data.availableSizes = data.availableSizes.split(",");
-    let availableSizes = data.availableSizes
-    //enum validaiton
-    let enumValue = ["S", "XS", "M", "X", "L", "XXL", "XL"]
-
-    let unique =[]
-    for(let i = 0; i <availableSizes.length;i++){
-        availableSizes[i]=availableSizes[i].toUpperCase()
-        if (unique.indexOf(availableSizes[i]) == -1){
-            if(enumValue.includes(availableSizes[i])){
-                unique.push(availableSizes[i])
-            } else{ return res.status(400).send({ status: false, message: `availableSizes can be only from "S", "XS","M","X", "L","XXL", "XL" these` })}
+    
+        //validProductId
+        if(!mongoose.isValidObjectId(productId)) return res.status(400).send({status:false,message:"productId in param is not a valid product id"})
+    
+        //joiValidation
+        let error
+        const validation=await updateProductJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message ; return null})
+        if(!validation) return res.status(400).send({status:false,message:error})
+    
+        //exist product id
+        const existProduct=await productModel.findOne({_id:productId,isDeleted:false})
+        if(!existProduct) return res.status(404).send({status:false,message:"no product found with this product id"})
+        
+        //uniqueTitle
+        const titleExist=await productModel.findOne({title:data.title,isDeleted:false})
+        if(titleExist) return res.status(400).send({status:false,message:"title already in use please use another one"})
+    
+    
+    
+       //availableSizes in array
+    
+       if (data.availableSizes) {
+    
+        data.availableSizes = data.availableSizes.split(",");
+        let availableSizes = data.availableSizes
+        //enum validaiton
+        let enumValue = ["S", "XS", "M", "X", "L", "XXL", "XL"]
+    
+        let unique =[]
+        for(let i = 0; i <availableSizes.length;i++){
+            availableSizes[i]=availableSizes[i].toUpperCase()
+            if (unique.indexOf(availableSizes[i]) == -1){
+                if(enumValue.includes(availableSizes[i])){
+                    unique.push(availableSizes[i])
+                } else{ return res.status(400).send({ status: false, message: `availableSizes can be only from "S", "XS","M","X", "L","XXL", "XL" these` })}
+            }
         }
+    
+        data.availableSizes = unique
+    
     }
-
-    data.availableSizes = unique
-
+    
+       //imageurl
+    
+       if(files&&files.length>0){
+        let imageUrl=await uploadFile(files[0])
+        data.productImage=imageUrl
+       }
+    
+    
+       if(Object.keys(data).length==0) return res.status(400).send({status:false,message:"please enter atleast one field in order to update it"})
+    
+        const updatedData=await productModel.findByIdAndUpdate(productId,{$set:data},{new:true})
+        return res.status(200).send({status:true,message:"successfully updated",data:updatedData})
+} catch (error) {
+    return res.status(500).send({status:false,message:error.message})
 }
-
-   //imageurl
-
-   if(files&&files.length>0){
-    let imageUrl=await uploadFile(files[0])
-    data.productImage=imageUrl
-   }
-
-
-   if(Object.keys(data).length==0) return res.status(400).send({status:false,message:"please enter atleast one field in order to update it"})
-
-    const updatedData=await productModel.findByIdAndUpdate(productId,{$set:data},{new:true})
-    return res.status(200).send({status:true,message:"successfully updated",data:updatedData})
 }
 
 

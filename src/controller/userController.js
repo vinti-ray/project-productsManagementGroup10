@@ -218,7 +218,7 @@ const userLogin = async function (req, res) {
        
 
 	    const updateData=await userModel.findByIdAndUpdate(userId,{$set:{...data}},{new:true})
-        console.log(updateData);
+ 
 
 	    return res.status(200).send({status:false,message:"User profile updated",data:updateData})
 } catch (error) {

@@ -177,18 +177,13 @@ const deleteCart = async (req, res) => {
     try {
         let userId = req.params.userId;
 
-        let userData = await userModel.findById(userId);
-        if (!userData) {
-            return res.status(404).send({ status: false, message: `User does not exist` });
-        }
-        if (req.userId != userId) {
-            return res.status(403).send({ status: false, message: 'You are not authorize to delete another cart' });
-        }
-
         let cartData = await cartModel.findOne({ userId });
         if (!cartData) {
             return res.status(404).send({ status: false, message: 'Cart does not exist' });
         }
+
+        if(cartData.totalItems==0)  return res.status(404).send({ status: false, message: 'cart is already empty' });
+
         await cartModel.findOneAndUpdate({ userId }, { items: [], totalPrice: 0, totalItems: 0 });
       return  res.status(204).send();
     }

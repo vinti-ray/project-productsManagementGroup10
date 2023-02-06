@@ -22,9 +22,9 @@ router.put("/products/:productId",updateProduct)
 
 //=================================cart ====================================
 router.post("/users/:userId/cart",authentication,authorisation,createCart)
-router.put("/users/:userId/cart",updateCart)
+router.put("/users/:userId/cart",authentication,authorisation,updateCart)
 router.get("/users/:userId/cart",authentication,authorisation,getCart)
-router.delete("/users/:userId/cart",deleteCart)
+router.delete("/users/:userId/cart",authentication,authorisation,deleteCart)
 
 
 
