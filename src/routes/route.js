@@ -1,7 +1,7 @@
 const express=require("express")
 const router=express.Router()
 const {createUser,userLogin,getData,putData}=require("../controller/userController")
-const {authentication,authforGet}=require("../middleware/auth")
+const {authentication,authorisation}=require("../middleware/auth")
 const {createProduct,getProduct,getProductbyId,updateProduct,deleteProductbyId}=require("../controller/productController")
 const {createCart,getCart,updateCart,deleteCart}=require("../controller/cartController")
 
@@ -9,8 +9,8 @@ const {createCart,getCart,updateCart,deleteCart}=require("../controller/cartCont
 router.post("/register",createUser)
 router.post("/login",userLogin)
 
-router.get("/user/:userId/profile",authentication,authforGet,getData)
-router.put("/user/:userId/profile",authentication,authforGet,putData)
+router.get("/user/:userId/profile",authentication,authorisation,getData)
+router.put("/user/:userId/profile",authentication,authorisation,putData)
 
 //===============================product====================================
 
@@ -21,9 +21,9 @@ router.delete("/products/:productId",deleteProductbyId)
 router.put("/products/:productId",updateProduct)
 
 //=================================cart ====================================
-router.post("/users/:userId/cart",createCart)
+router.post("/users/:userId/cart",authentication,authorisation,createCart)
 router.put("/users/:userId/cart",updateCart)
-router.get("/users/:userId/cart",getCart)
+router.get("/users/:userId/cart",authentication,authorisation,getCart)
 router.delete("/users/:userId/cart",deleteCart)
 
 

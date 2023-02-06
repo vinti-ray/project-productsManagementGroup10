@@ -21,7 +21,7 @@ const authentication=async (req,res,next)=>{
      
 }
 //===========================authorisation===========================
-const authforGet=async (req,res,next)=>{
+const authorisation=async (req,res,next)=>{
 
     let userId=req.params.userId
 
@@ -33,4 +33,4 @@ const authforGet=async (req,res,next)=>{
     next()
 }
 
-module.exports={authentication,authforGet}
+module.exports={authentication,authorisation}
