@@ -8,31 +8,30 @@ const createCart = async (req, res) => {
     try {
         let userId = req.params.userId
         let data = req.body
-        let { items } = data
-        let checkCart = await cartModel.findById(userId)
-
-        if (!checkCart) {
-            let totalPrice = 0
-            for (let i of items) {
-                let productData = await productModel.findOne({ _id: i.productId, isDeleted: false })
-                totalPrice += productData.price
-            }
-
-            let newCart = {
-                userId: userId,
-                items: items,
-                totalPrice: totalPrice,
-                totalItems: items.length
-            }
-            let createCart = await cartModel.create(newCart)
-            res.status(201).send({ status: true, message: "Success", data: createCart })
-        }
-        else {
+        let { cartId, productId } = data
+        if(cartId){
+            let checkCart = await cartModel.findById(cartId)
+            if(!checkCart) res.status(404).send({status: false, message: "cart is not exist,Please create new Cart"})
             let totalPrice = checkCart.totalPrice
-            for (let i of items) {
-                let productData = await productModel.findOne({ _id: i.productId, isDeleted: false })
-                totalPrice += productData.price
-                checkCart.items.push(i)
+            
+            let productData = await productModel.findOne({ _id: productId, isDeleted: false })
+            if(!productData) res.status(404).send({status:false, message:"product is not exist"})
+            
+            let quantity= 1
+            for(let i=0; i<checkCart.totalItems; i++){
+                if(checkCart.items[i].productId== productId){
+                   quantity= checkCart.items[i].quantity + 1  
+                }
+            }
+
+            totalPrice += productData.price
+            
+            if(quantity==1){
+                let newItem ={
+                    productId: productId,
+                    quantity: quantity
+                } 
+              checkCart.items.push(newItem)
             }
             let updatedCart = {
                 items: checkCart.items,
@@ -40,6 +39,22 @@ const createCart = async (req, res) => {
                 totalItems: checkCart.items.length
             }
             let createCart = await cartModel.findByIdAndUpdate(checkCart._id, { $set: updatedCart }, { new: true })
+            res.status(201).send({ status: true, message: "Success", data: createCart })
+        }
+        else {
+            let productData = await productModel.findOne({ _id: productId, isDeleted: false })
+            if(!productData) return res.status(404).send({status:false, message:"product not found"})
+
+
+            let newCart = {
+                userId: userId,
+                items: [{
+                    productId: productId,
+                    quantity: 1 }],
+                    totalPrice: productData.price,
+                totalItems: 1
+            }
+            let createCart = await cartModel.create(newCart)
             res.status(201).send({ status: true, message: "Success", data: createCart })
         }
     } catch (err) {
