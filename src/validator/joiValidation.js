@@ -52,6 +52,8 @@ const updateJoi=Joi.object({
 
     phone:Joi.string().trim().optional().regex(/^[5-9]{1}[0-9]{9}$/).message("please enter valid mobile number"),
 
+    profileImage:Joi.optional(),
+
     password:Joi.string().trim().optional().min(8).max(15).regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,15}$/).message("password must contain one upper case one lower case one special character and one numerical value"),
 
     address:Joi.object({
@@ -94,8 +96,8 @@ const productJoi=Joi.object({
     style:Joi.string().trim().optional(),
     availableSizes:Joi.string().trim().optional(),
     installments: Joi.number().optional(),
-    deletedAt: Joi.date(), 
-    isDeleted: Joi.boolean(),
+    // deletedAt: Joi.date(), 
+    // isDeleted: Joi.boolean(),
 })
 
 //=============================update Product======================
@@ -104,6 +106,7 @@ const updateProductJoi=Joi.object({
     title: Joi.string().optional(),
     description:Joi.string().optional(),
     price:Joi.number().optional(),
+    productImage:Joi.optional(),
     currencyId:Joi.string().optional().valid("INR"),
     currencyFormat: Joi.string().optional().valid("₹"),
     isFreeShipping: Joi.boolean().optional(),

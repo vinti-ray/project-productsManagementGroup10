@@ -5,7 +5,7 @@ const jwt=require("jsonwebtoken")
 const {userJoi,loginJoi,updateJoi,isValidPinCode}=require("../validator/joiValidation")
 const bcrypt=require("bcrypt")
 const {uploadFile}=require("../aws/aws")
-const P = require('pincode-validator');
+// const P = require('pincode-validator');
 const saltRounds = 10;   
 
 
@@ -66,7 +66,9 @@ const createUser=async (req,res)=>{
 
 
     if(files && files.length>0){ 
- 
+
+        if(files[0].mimetype!="image/jpeg"&&files[0].mimetype!="image/png"&&files[0].mimetype!="image/jpg") return res.status(400).send({status:false,message:"you can upload only image file"})
+
         let uploadedFileURL= await uploadFile( files[0] )
         data.profileImage=uploadedFileURL
     }else{
@@ -154,8 +156,19 @@ const userLogin = async function (req, res) {
 
 
             if(data.address){
-                data.address=JSON.parse(data.address)
+                try {
+                    data.address=JSON.parse(data.address)
+                } catch (error) {
+                    return res.status(400).send({status:false,message:"please enter address in valid format"})
+                }}
 
+        //joi validation
+        let error
+        const validation=await updateJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message;return null})
+        if(!validation) return res.status(400).send({  status: false,message: error})
+
+
+                if(data.address){
               //pincode validation
                 if(data.address.shipping){
                     if(data.address.shipping.pincode){
@@ -186,12 +199,7 @@ const userLogin = async function (req, res) {
 
             }
           
-       
 
-        //joi validation
-        let error
-        const validation=await updateJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message;return null})
-        if(!validation) return res.status(400).send({  status: false,message: error})
 
         //unique email and phone
         if(data.email||data.phone){
@@ -214,11 +222,15 @@ const userLogin = async function (req, res) {
         //image url
    
         let files=req.files
+
         if(files&&files.length>0){
+
+            if(files[0].mimetype!="image/jpeg"&&files[0].mimetype!="image/png"&&files[0].mimetype!="image/jpg") return res.status(400).send({status:false,message:"you can upload only image file"})
+
             const uploadedFileURL=await uploadFile(files[0])
             data.profileImage=uploadedFileURL
+ 
         }
-
 
          if (Object.keys(data).length == 0) {
           return res.status(400).send({ status: false, message: "Please Enter data in body in order to update it" })
@@ -241,13 +253,6 @@ const userLogin = async function (req, res) {
 module.exports={createUser,userLogin,getData,putData}
 
 
-
-//- Allow an user to update their profile.
-// - A user can update all the fields
-// - Make sure that userId in url param and in token is same
-// - __Response format__
-//   - _**On success**_ - Return HTTP status 200. Also return the updated user document. The response should be a JSON object like [this](#successful-response-structure)
-//   - _**On error**_ - Return a suitable error message with a valid HTTP status code. The response should be a JSON object like [this](#error-response-structure)
 
 
 

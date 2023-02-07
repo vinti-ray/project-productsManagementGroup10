@@ -55,8 +55,12 @@ try {
         //aws s3
     
         if(files&&files.length>0){
+
+            if(files[0].mimetype!="image/jpeg"&&files[0].mimetype!="image/png"&&files[0].mimetype!="image/jpg") return res.status(400).send({status:false,message:"you can upload only image file"})
             let uploadImage=await uploadFile(files[0])
             data.productImage=uploadImage
+        }else{
+            return res.status(400).send({ status: false, message: "please upload profile image " })
         }
     
         //data creation
@@ -210,6 +214,9 @@ try {
        //imageurl
     
        if(files&&files.length>0){
+
+        if(files[0].mimetype!="image/jpeg"&&files[0].mimetype!="image/png"&&files[0].mimetype!="image/jpg") return res.status(400).send({status:false,message:"you can upload only image file"})
+
         let imageUrl=await uploadFile(files[0])
         data.productImage=imageUrl
        }
