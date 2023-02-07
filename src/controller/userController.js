@@ -13,23 +13,27 @@ const saltRounds = 10;
 //===============================create user================================
 const createUser=async (req,res)=>{
     try {
-        
+         
         let data=req.body
         let files= req.files
-
+ 
         if (files&&files.length!=0) {
             data.profileImage=files
         }
-
+        
         if (Object.keys(req.body).length == 0) {
             return res.status(400).send({ status: false, message: "Please Enter data in body" })
         }
-
+        
 
       if(data.address){
-        data.address=JSON.parse(data.address)
+         try {
+           data.address=JSON.parse(data.address)
+            } catch (error) {
+                return res.status(400).send({status:false,message:"please enter address in valid format"})
+            }
       }
-      
+
 
 
         let error
@@ -40,7 +44,8 @@ const createUser=async (req,res)=>{
       let pincodeShipping=data.address.shipping.pincode
       let pincodeBilling=data.address.billing.pincode
 
-      if((!isValidPinCode(pincodeShipping))||(!isValidPinCode(pincodeBilling)))  return res.status(400).send({status: false,message:"pin code in shipping address or billing address  is not valid"})
+      if(!isValidPinCode(pincodeShipping))  return res.status(400).send({status: false,message:"pin code in shipping address   is not valid"})
+      if(!isValidPinCode(pincodeBilling)) return res.status(400).send({status: false,message:"pin code in billing address  is not valid"})
 
 
 	
@@ -64,6 +69,8 @@ const createUser=async (req,res)=>{
  
         let uploadedFileURL= await uploadFile( files[0] )
         data.profileImage=uploadedFileURL
+    }else{
+        return res.status(400).send({ status: false, message: "please upload profile image " })
     }
 	
 

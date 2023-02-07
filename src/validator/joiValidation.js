@@ -4,30 +4,29 @@ const Joi=require("joi")
 
 //===========================user creation===============================
 const userJoi=Joi.object({
-    fname:Joi.string().trim().required(),
+    fname:Joi.string().trim().required().regex(/^[a-zA-Z ]+$/).message("please provide valid fname"),
 
-    lname:Joi.string().trim().required(),
+    lname:Joi.string().trim().required().regex(/^[a-zA-Z ]+$/).message("please provide valid lname"),
 
-    email:Joi.string().trim().required().regex(/^[A-Za-z0-9._]{3,}@[A-Za-z]{3,}[.]{1,}[A-Za-z.]{2,8}$/).
-    message("please enter valid email"),
+    email:Joi.string().trim().required().regex(/^[A-Za-z0-9._]{3,}@[A-Za-z]{3,}[.]{1,}[A-Za-z.]{2,8}$/).message("please enter valid email"),
 
     profileImage:Joi.required(),
 
     phone:Joi.string().trim().required().regex(/^[5-9]{1}[0-9]{9}$/).message("please enter valid mobile number"),
 
-    password:Joi.string().trim().required().min(8).max(15),
+    password:Joi.string().trim().required().min(8).max(15).regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,15}$/).message("password must contain one upper case one lower case one special character and one numerical value"),
 
     address:Joi.object({
         shipping:Joi.object({
             street:Joi.string().trim().required(),
-            city:Joi.string().trim().required(),
-            pincode:Joi.number().strict().required()
+            city:Joi.string().trim().required().regex(/^[a-zA-Z ]+$/).message("please provide valid city name"),
+            pincode:Joi.number().integer().strict().required()
         }).required(),
 
         billing:Joi.object({
             street:Joi.string().trim().required(),
-            city:Joi.string().trim().required(),
-            pincode:Joi.number().strict().required() //Joi.string().required().regex(/^[0-9]+$/).cast('number');
+            city:Joi.string().trim().required().regex(/^[a-zA-Z ]+$/).message("please provide valid city name"),
+            pincode:Joi.number().integer().strict().required() //Joi.string().required().regex(/^[0-9]+$/).cast('number');
         }).required()
     }).required(),
 
@@ -37,36 +36,34 @@ const userJoi=Joi.object({
 //=====================login joi=================
 
 const loginJoi=Joi.object({
-    email:Joi.string().trim().required().regex(/^[A-Za-z0-9._]{3,}@[A-Za-z]{3,}[.]{1,}[A-Za-z.]{2,8}$/).
-    message("please enter valid email"),
-    password:Joi.string().trim().required().min(8).max(15)
+    email:Joi.string().trim().required().regex(/^[A-Za-z0-9._]{3,}@[A-Za-z]{3,}[.]{1,}[A-Za-z.]{2,8}$/).message("please enter valid email"),
+    password:Joi.string().trim().required().min(8).max(15).regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,15}$/).message("password must contain one upper case one lower case one special character and one numerical value")
 })
 
 
 
 //===================update user joi================
 const updateJoi=Joi.object({
-    fname:Joi.string().trim().optional(),
+    fname:Joi.string().trim().optional().regex(/^[a-zA-Z ]+$/).message("please provide valid fname"),
 
-    lname:Joi.string().trim().optional(),
+    lname:Joi.string().trim().optional().regex(/^[a-zA-Z ]+$/).message("please provide valid lname"),
 
-    email:Joi.string().trim().optional().regex(/^[A-Za-z0-9._]{3,}@[A-Za-z]{3,}[.]{1,}[A-Za-z.]{2,8}$/).
-    message("please enter valid email"),
+    email:Joi.string().trim().optional().regex(/^[A-Za-z0-9._]{3,}@[A-Za-z]{3,}[.]{1,}[A-Za-z.]{2,8}$/).message("please enter valid email"),
 
     phone:Joi.string().trim().optional().regex(/^[5-9]{1}[0-9]{9}$/).message("please enter valid mobile number"),
 
-    password:Joi.string().trim().optional().min(8).max(15),
+    password:Joi.string().trim().optional().min(8).max(15).regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,15}$/).message("password must contain one upper case one lower case one special character and one numerical value"),
 
     address:Joi.object({
         shipping:Joi.object({
             street:Joi.string().trim().optional(),
-            city:Joi.string().trim().optional(),
+            city:Joi.string().trim().optional().regex(/^[a-zA-Z ]+$/).message("please provide valid city name"),
             pincode:Joi.number().strict().optional()
         }),
 
         billing:Joi.object({
             street:Joi.string().trim().optional(),
-            city:Joi.string().trim().optional(),
+            city:Joi.string().trim().optional().regex(/^[a-zA-Z ]+$/).message("please provide valid city name"),
             pincode:Joi.number().strict().optional()
 
         })
@@ -78,7 +75,7 @@ const updateJoi=Joi.object({
 
 
 const isValidPinCode = (value) => {
-    const regEx = /^\s*([0-9]){6}\s*$/
+    const regEx = (/^([1-9]{4}|[0-9]{6})$/)
     const result = regEx.test(value)
     return result
 }

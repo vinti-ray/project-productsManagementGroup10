@@ -42,7 +42,7 @@ const createCart = async (req, res) => {
             }
         
 
-            totalPrice += productData.price
+            totalPrice += productData.price          
         
 
             if (quantity == 1) {
