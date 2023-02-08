@@ -2,6 +2,7 @@ const cartModel = require("../model/cartModel")
 const productModel = require("../model/productModel")
 const mongoose = require("mongoose");
 const userModel=require("../model/userModel")
+const {cartJoi}=require("../validator/joiValidation")
 
 
 
@@ -11,6 +12,8 @@ const createCart = async (req, res) => {
         let userId = req.params.userId
         let data = req.body
         let { cartId, productId } = data
+
+        if(Object.keys(data).length==0)  return res.status(400).send({status:false,message:"please enter required field in body "})
 
         if(!productId) return res.status(400).send({status:false, message:"please enter product Id"})
         if(!mongoose.isValidObjectId(productId)) return res.status(400).send({status:false, message:"please enter valid productId in request body"})
@@ -117,36 +120,49 @@ try {
         let data = req.body
         if (Object.keys(data).length==0) return res.status(400).send({ status: false, message: "Please put some data" })
         let { cartId, productId, removeProduct } = data
+
+        let error
+        const validation=await cartJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message;return null})
+        if(!validation) return res.status(400).send({  status: false,message: error})
     
     
-        if (!cartId) return res.status(400).send({ status: false, message: "Please provide cartId" })
-        if(!productId) return res.status(400).send({ status: false, message: "Please provide productId" })
-    
-        if (removeProduct!=0 && removeProduct!=1) return res.status(400).send({status:false, message: "Please enter removeProduct"})
+ 
+        if(!mongoose.isValidObjectId(cartId)) return res.status(400).send({ status: false, message: "Please provide valid cartId" })
+
+
+        if(!mongoose.isValidObjectId(productId)) return res.status(400).send({ status: false, message: "Please provide valid productId" })
+
     
         let getCartId = await cartModel.findById(cartId).lean()
+
+
     
         if(!getCartId) return res.status(400).send({ status: false, message: "no cart exist with this id" })
+
+
+        if(getCartId.userId!=req.params.userId) return res.status(403).send({ status: false, message: "you are not authorised to update product in this cart" })
         
-    
+     
             let removedItem
             for (let i = 0; i < getCartId.totalItems; i++) {
                 if (getCartId.items[i].productId == productId) {
-                    if ((removeProduct == 0))  {
+                    if ((removeProduct == 0 ||(removeProduct == 1 && getCartId.items[i].quantity == 1)))  {
                         removedItem = getCartId.items.splice(i, 1)
+                        removedItem=removedItem[0]
                         break;
                     }
-                    if (removeProduct == 1 && getCartId.items[i].quantity > 1) {
+                    if (removeProduct == 1 && getCartId.items[i].quantity >1) {
                         getCartId.items[i].quantity = getCartId.items[i].quantity - 1
                         removedItem = getCartId.items[i]
                         break;
                     } 
                 }
             }
-    
+         
+        
             if (!removedItem) return res.status(404).send({ status: false, message: "Product is not present in cart" })
     
-            let deletedProduct = await productModel.findById(removedItem[0].productId)
+            let deletedProduct = await productModel.findById(removedItem.productId)
     
     
             if (!deletedProduct) return res.status(404).send({ status: false, message: "Product is not found in database" })
@@ -166,7 +182,7 @@ try {
     
           return  res.status(200).send({ status: true, message: updatedCart })
 } catch (error) {
-   return res.status(500).send({ status: false, message: err.message });
+   return res.status(500).send({ status: false, message: error.message });
 }
 
 

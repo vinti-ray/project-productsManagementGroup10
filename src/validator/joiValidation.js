@@ -128,9 +128,11 @@ const getProductByQuery=Joi.object({
 })
 
 
-//==================create cart joi =====================
-// const cartJoi=Joi.object({
-
-// })
-module.exports={userJoi,loginJoi,updateJoi,isValidPinCode,productJoi,updateProductJoi,getProductByQuery}
+//==================update cart joi =====================
+const cartJoi=Joi.object({
+       productId:Joi.string().required(),
+       cartId:Joi.string().required(),
+       removeProduct:Joi.number().strict().valid(1,0)
+})
+module.exports={userJoi,loginJoi,updateJoi,isValidPinCode,productJoi,updateProductJoi,getProductByQuery,cartJoi}
 
