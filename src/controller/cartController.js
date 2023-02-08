@@ -125,24 +125,16 @@ try {
         const validation=await cartJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message;return null})
         if(!validation) return res.status(400).send({  status: false,message: error})
     
-    
- 
         if(!mongoose.isValidObjectId(cartId)) return res.status(400).send({ status: false, message: "Please provide valid cartId" })
-
 
         if(!mongoose.isValidObjectId(productId)) return res.status(400).send({ status: false, message: "Please provide valid productId" })
 
-    
         let getCartId = await cartModel.findById(cartId).lean()
-
-
     
         if(!getCartId) return res.status(400).send({ status: false, message: "no cart exist with this id" })
 
-
         if(getCartId.userId!=req.params.userId) return res.status(403).send({ status: false, message: "you are not authorised to update product in this cart" })
         
-     
             let removedItem
             for (let i = 0; i < getCartId.totalItems; i++) {
                 if (getCartId.items[i].productId == productId) {
