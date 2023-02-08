@@ -131,7 +131,7 @@ try {
 
         let getCartId = await cartModel.findById(cartId).lean()
     
-        if(!getCartId) return res.status(400).send({ status: false, message: "no cart exist with this id" })
+        if(!getCartId) return res.status(404).send({ status: false, message: "no cart exist with this id" })
 
         if(getCartId.userId!=req.params.userId) return res.status(403).send({ status: false, message: "you are not authorised to update product in this cart" })
         

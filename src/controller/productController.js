@@ -112,14 +112,22 @@ const getProduct = async (req,res)=>{
     }
 
     if(priceGreaterThan){
-        filter.price = {$gt:priceGreaterThan}
+        if(priceLessThan){
+        filter.price = {$gt:priceGreaterThan,$lt:priceLessThan}
+         }else{
+            filter.price={$gt:priceGreaterThan}
+         }
     }
 
     if(priceLessThan){
+        if(priceGreaterThan){
+            filter.price = {$gt:priceGreaterThan,$lt:priceLessThan}
+        }else{
         filter.price = {$lt:priceLessThan}
     }
+    }
 
-   
+
     let sortProduct
     if(priceSort){
         sortProduct = {price: priceSort}
