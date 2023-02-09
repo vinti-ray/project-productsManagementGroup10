@@ -24,12 +24,21 @@ const createCart = async (req, res) => {
 
         if(!mongoose.isValidObjectId(productId)) return res.status(400).send({status:false, message:"please enter valid productId in request body"})
 
+        //if cart exist but cartId is not provided in req.body
+        if(!cartId){
+        let isCartExist=await cartModel.findOne({userId:userId})
+          if(isCartExist){
+            cartId=isCartExist._id
+          }
+        }
+
+        //if cart id is provided in req.body
         if (cartId) {
             if(!mongoose.isValidObjectId(cartId)) return res.status(400).send({status:false, message:"please enter valid cartId in request body"})
 
             let checkCart = await cartModel.findById(cartId).lean()
 
-            if (!checkCart) return res.status(404).send({ status: false, message: "cart is not exist,Please enter valid cartId" })
+            if (!checkCart) return res.status(404).send({ status: false, message: "cart doesnot  exist,Please enter valid cartId" })
 
             if(checkCart.userId!=userId) return res.status(403).send({ status: false, message: "you are not authorised to store product in this cart" })
 
@@ -70,16 +79,19 @@ const createCart = async (req, res) => {
                 totalPrice: totalPrice,
                 totalItems: checkCart.items.length
             }
-            let createCart = await cartModel.findByIdAndUpdate(checkCart._id, { $set: updatedCart }, { new: true }).select({__v:0})
-             
+            let createCart = await cartModel.findByIdAndUpdate(checkCart._id, { $set: updatedCart }, { new: true }).select({__v:0}).lean()
+
+            //deleted _id from items
+             for (let i of createCart.items){
+                delete i._id
+             }
 
 
          return  res.status(201).send({ status: true, message: "Success", data: createCart })
         }
         else {
 
-            let isCartExist=await cartModel.findOne({userId:userId})
-            if(isCartExist) return res.status(400).send({status:false,message:"cart already exist for this user please enter cartId "})
+
             let productData = await productModel.findOne({ _id: productId, isDeleted: false })
             if (!productData) return res.status(404).send({ status: false, message: "product not found" })
 
@@ -100,6 +112,13 @@ const createCart = async (req, res) => {
             //removing __V
             createCart=createCart._doc
             delete createCart.__v
+  
+
+       //deleted _id from items
+         for (let i of createCart.items){
+              i=i._doc
+              delete i._id
+              }
 
            return res.status(201).send({ status: true, message: "Success", data: createCart })
         }
@@ -122,10 +141,17 @@ const getCart = async (req, res) => {
         //     return res.status(403).send({ status: false, message: "You are not authorize to see other's cart" });
         // }
 
-        let cartData = await cartModel.findOne({ userId }).populate('items.productId', { _id: 0, title: 1, description: 1, price: 1, productImage: 1, style: 1 });
+        let cartData = await cartModel.findOne({ userId }).populate('items.productId', { _id: 0, title: 1, description: 1, price: 1, productImage: 1, style: 1 }).select({__v:0}).lean();
         if (!cartData) {
             return res.status(404).send({ status: false, message: `You haven't added any products to your cart` });
         }
+
+    //deleted _id from items
+       for (let i of cartData.items){
+           delete i._id
+     }
+
+
         res.status(200).send({ status: true, message: 'Success', data: cartData });
     }
     catch (err) {
@@ -189,7 +215,12 @@ try {
                     totalItems: totalItems
                 },
                 { new: true }
-            )
+            ).select({__v:0}).lean()
+
+    //deleted _id from items
+         for (let i of updatedCart.items){
+              delete i._id
+              }
     
           return  res.status(200).send({ status: true, message: updatedCart })
 } catch (error) {
@@ -212,7 +243,9 @@ const deleteCart = async (req, res) => {
         if(cartData.totalItems==0)  return res.status(404).send({ status: false, message: 'cart is already empty' });
 
         await cartModel.findOneAndUpdate({ userId }, { items: [], totalPrice: 0, totalItems: 0 });
-      return  res.status(204).send();
+
+     //response body is empty with status code 204
+      return  res.status(204).send();           //ask TA
     }
     catch (err) {
       return  res.status(500).send({ status: false, message: err.message });

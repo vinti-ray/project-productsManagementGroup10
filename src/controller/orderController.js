@@ -15,6 +15,7 @@ const createOrder = async (req, res) => {
     if (Object.keys(req.body).length == 0) return res.status(400).send({ status: false, message: "please enter required field in body " })
 
     let { cartId, cancellable, ...rest } = req.body
+    cartId=cartId.trim()
     if (Object.keys(rest).length != 0) return res.status(400).send({ status: false, message: "user are allowed to send cartId and cancellable status only from request body" })
 
     if (!cartId) return res.status(400).send({ status: false, message: "cartId is mandatory" })
@@ -25,6 +26,8 @@ const createOrder = async (req, res) => {
     const findCart = await cartModel.findById(cartId).select({ __v: 0, _id: 0, createdAt: 0, updatedAt: 0 }).lean()
 
     if (!findCart) return res.status(404).send({ status: false, message: "no cart  found with for this cartId " })
+
+    if(findCart.userId!=userId) return res.status(403).send({ status: false, message: "you are not authorised to create order with this cart" })
 
     if (findCart.totalItems == 0) return res.status(404).send({ status: false, message: "there is no items present in cart please add some items before ordering" })
 
@@ -48,6 +51,14 @@ const createOrder = async (req, res) => {
 
     createOrder = createOrder._doc
     delete createOrder.isDeleted
+    delete createOrder.__v
+
+           //deleted _id from items
+           for (let i of createOrder.items){
+            i=i._doc
+            delete i._id
+            }
+
 
     return res.status(201).send({ status: true, message: "success", data: createOrder })
 
@@ -61,7 +72,8 @@ const createOrder = async (req, res) => {
 const updateOrder = async (req, res) => {
   try {
     let userId = req.params.userId
-
+    
+    //when no data provided
     if (Object.keys(req.body).length == 0) return res.status(400).send({ status: false, message: "please enter required field in body " })
 
     let { orderId, status, ...rest } = req.body
@@ -69,14 +81,17 @@ const updateOrder = async (req, res) => {
     if (Object.keys(rest).length != 0) return res.status(400).send({ status: false, message: "user are allowed to send orderID and  status key only from request body" })
 
     if (!orderId) return res.status(400).send({ status: false, message: "please enter orderID in body " })
+
     if (!mongoose.isValidObjectId(orderId)) return res.status(400).send({ status: false, message: "please enter valid orderID in body " })
 
     if (!status) return res.status(400).send({ status: false, message: "please enter status  in body " })
 
     if (status != "completed" && status != "cancled") return res.status(400).send({ status: false, message: "status can be only pending cancled or completed " })
 
+    //find if order exist
     const orderDoc = await orderModel.findById(orderId)
     if (!orderDoc) return res.status(404).send({ status: false, message: "there is no order with this order id" })
+
     if (orderDoc.status != "pending") return res.status(400).send({ status: false, message: `Order is already ${orderDoc.status}` })
 
     //- Make sure the order belongs to the user
@@ -85,14 +100,29 @@ const updateOrder = async (req, res) => {
     //only a cancellable order could be canceled
     if (status == "cancled") {
       if (orderDoc.cancellable == true) {
-        const updateStatus = await orderModel.findByIdAndUpdate(orderId, { $set: { status: status, isDeleted: true, deletedAt: Date.now() } }, { new: true })
+
+        //cancel order
+        const updateStatus = await orderModel.findByIdAndUpdate(orderId, { $set: { status: status, isDeleted: true, deletedAt: Date.now() } }, { new: true }).select({__v:0}).lean()
+
+           //deleted _id from items
+           for (let i of updateStatus.items){
+            delete i._id
+            }
+
         return res.status(200).send({ status: true, message: "update successful", data: updateStatus })
       } else {
         return res.status(400).send({ status: false, message: "this order is not cancellable sorry for your inconvenience" })     ///status code review
       }
     }
     else {
-        const updateStatus = await orderModel.findByIdAndUpdate(orderId, { $set: { status: status } }, { new: true })
+
+      //complete order
+        const updateStatus = await orderModel.findByIdAndUpdate(orderId, { $set: { status: status } }, { new: true }).select({__v:0}).lean()
+
+        for (let i of updateStatus.items){
+          delete i._id
+          }
+
         return res.status(200).send({ status: true, message: "update successful", data: updateStatus })
     }
   } catch (error) {
