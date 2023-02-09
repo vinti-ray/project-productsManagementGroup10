@@ -49,7 +49,7 @@ const createOrder = async (req, res) => {
     createOrder = createOrder._doc
     delete createOrder.isDeleted
 
-    return res.status(200).send({ status: true, message: "success", data: createOrder })
+    return res.status(201).send({ status: true, message: "success", data: createOrder })
 
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message })

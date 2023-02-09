@@ -2,7 +2,7 @@ const cartModel = require("../model/cartModel")
 const productModel = require("../model/productModel")
 const mongoose = require("mongoose");
 const userModel=require("../model/userModel")
-const {cartJoi}=require("../validator/joiValidation")
+const {createcartJoi,cartJoi}=require("../validator/joiValidation")
 
 
 
@@ -13,17 +13,22 @@ const createCart = async (req, res) => {
         let data = req.body
         let { cartId, productId } = data
 
+
         if(Object.keys(data).length==0)  return res.status(400).send({status:false,message:"please enter required field in body "})
 
-        if(!productId) return res.status(400).send({status:false, message:"please enter product Id"})
+
+        //joi validation
+        let error
+        const validation=await createcartJoi.validateAsync(data).then(()=>true).catch((err)=>{error=err.message;return null})
+        if(!validation) return res.status(400).send({  status: false,message: error})
+
         if(!mongoose.isValidObjectId(productId)) return res.status(400).send({status:false, message:"please enter valid productId in request body"})
 
         if (cartId) {
             if(!mongoose.isValidObjectId(cartId)) return res.status(400).send({status:false, message:"please enter valid cartId in request body"})
+
             let checkCart = await cartModel.findById(cartId).lean()
 
-  
-        
             if (!checkCart) return res.status(404).send({ status: false, message: "cart is not exist,Please enter valid cartId" })
 
             if(checkCart.userId!=userId) return res.status(403).send({ status: false, message: "you are not authorised to store product in this cart" })
@@ -31,16 +36,18 @@ const createCart = async (req, res) => {
             let totalPrice = checkCart.totalPrice
 
             let productData = await productModel.findOne({ _id: productId, isDeleted: false })
-            if (!productData) res.status(404).send({ status: false, message: "product is not exist" })
+            if (!productData) return res.status(404).send({ status: false, message: "product  not found" })
          
 
             let quantity = 1
+
          
             for (let i = 0; i < checkCart.totalItems; i++) {
 
                 if (checkCart.items[i].productId == productId) {
 
                     quantity = checkCart.items[i].quantity = checkCart.items[i].quantity + 1
+
                 }
             }
         
@@ -55,13 +62,18 @@ const createCart = async (req, res) => {
                 }
                 checkCart.items.push(newItem)
             }
+
+
    
             let updatedCart = { 
                 items: checkCart.items,
                 totalPrice: totalPrice,
                 totalItems: checkCart.items.length
             }
-            let createCart = await cartModel.findByIdAndUpdate(checkCart._id, { $set: updatedCart }, { new: true })
+            let createCart = await cartModel.findByIdAndUpdate(checkCart._id, { $set: updatedCart }, { new: true }).select({__v:0})
+             
+
+
          return  res.status(201).send({ status: true, message: "Success", data: createCart })
         }
         else {
@@ -81,7 +93,14 @@ const createCart = async (req, res) => {
                 totalPrice: productData.price,
                 totalItems: 1
             }
+
+            //cart creation
             let createCart = await cartModel.create(newCart)
+
+            //removing __V
+            createCart=createCart._doc
+            delete createCart.__v
+
            return res.status(201).send({ status: true, message: "Success", data: createCart })
         }
     } catch (err) {

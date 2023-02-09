@@ -1,5 +1,6 @@
 const jwt=require("jsonwebtoken")
 const mongoose=require("mongoose")
+const userModel = require("../model/userModel")
 
 //=================authentication=======================================
 
@@ -32,6 +33,9 @@ try {
     
     
         if(!mongoose.isValidObjectId(userId))  return res.status(400).send({status:false,message:"userId is not valid"})
+
+        const findUser=await userModel.findById(userId)
+        if(!findUser) return res.status(404).send({status:false,message:"no user present with this userID"})
     
         if(req.decode.userId!==userId) return res.status(403).send({status:false,message:"you are not authorised "})
 

@@ -127,6 +127,12 @@ const getProductByQuery=Joi.object({
    // size, name, priceGreaterThan, priceLessThan, priceSort
 })
 
+//===========================create cart joi==================
+const createcartJoi=Joi.object({
+    productId:Joi.string().required(),
+    cartId:Joi.string().optional()
+})
+
 
 //==================update cart joi =====================
 const cartJoi=Joi.object({
@@ -134,5 +140,5 @@ const cartJoi=Joi.object({
        cartId:Joi.string().required(),
        removeProduct:Joi.number().strict().valid(1,0)
 })
-module.exports={userJoi,loginJoi,updateJoi,isValidPinCode,productJoi,updateProductJoi,getProductByQuery,cartJoi}
+module.exports={userJoi,loginJoi,updateJoi,isValidPinCode,productJoi,updateProductJoi,getProductByQuery,cartJoi,createcartJoi}
 

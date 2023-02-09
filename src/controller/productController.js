@@ -62,10 +62,16 @@ try {
         }else{
             return res.status(400).send({ status: false, message: "please upload profile image " })
         }
+
+        //deletedAt
+       data.deletedAt=null
     
         //data creation
     
-        const createProduct=await productModel.create(data)
+        let createProduct=await productModel.create(data)
+
+        createProduct=createProduct._doc
+        delete createProduct.__v
     
     
        return res.status(201).send({status:true,message:"success",data:createProduct})
@@ -133,7 +139,7 @@ const getProduct = async (req,res)=>{
         sortProduct = {price: priceSort}
     }
 
-    let getData= await productModel.find(filter).sort(sortProduct)
+    let getData= await productModel.find(filter).select({__v:0}).sort(sortProduct)
   
 
     if(getData.length==0) return res.status(404).send({status:false,message:"no data found"})
@@ -157,11 +163,13 @@ const getProductbyId = async function (req, res) {
 
         if(!mongoose.isValidObjectId(productId)) return res.status(400).send({status:false,message:"product id is not valid"})
 
-        const getproduct = await productModel.findOne({ _id: productId, isDeleted: false, });
+        let getproduct = await productModel.findOne({ _id: productId, isDeleted: false, }).select({__v:0});
+
 
         if (!getproduct) {
             return res.status(404).send({ status: false, message: "product not found" });
         }
+
         return res.status(200).send({ status: true, message: "Success", data: getproduct });
     }
     catch (err) {
@@ -179,7 +187,7 @@ try {
     
     
         //validProductId
-        if(!mongoose.isValidObjectId(productId)) return res.status(400).send({status:false,message:"productId in param is not a valid product id"})
+        if(!mongoose.isValidObjectId(productId)) return res.status(400).send({status:false,message:"productId in param is not a valid object id"})
     
         //joiValidation
         let error
@@ -221,19 +229,40 @@ try {
     
        //imageurl
     
+
+
        if(files&&files.length>0){
 
         if(files[0].mimetype!="image/jpeg"&&files[0].mimetype!="image/png"&&files[0].mimetype!="image/jpg") return res.status(400).send({status:false,message:"you can upload only image file"})
 
         let imageUrl=await uploadFile(files[0])
         data.productImage=imageUrl
+
+       }
+   
+       if(req.body.productImage==""){ 
+        return res.status(400).send({ status: false, message:"error from empty profileimage" })
        }
     
-    
        if(Object.keys(data).length==0) return res.status(400).send({status:false,message:"please enter atleast one field in order to update it"})
+
+       //deletedAt
+       if(data.isDeleted){
+        if(Object.values(data).includes("true")){
+            data.deletedAt=Date.now()
+        }else{
+            data.deletedAt=null
+        }
+       }else{
+        data.deletedAt=null
+       }
+
+       
     
-        const updatedData=await productModel.findByIdAndUpdate(productId,{$set:data},{new:true})
-        return res.status(200).send({status:true,message:"successfully updated",data:updatedData})
+        const updatedData=await productModel.findByIdAndUpdate(productId,{$set:data},{new:true}).select({__v:0})
+
+
+        return res.status(200).send({status:true,message:"Success",data:updatedData})
 } catch (error) {
     return res.status(500).send({status:false,message:error.message})
 }
@@ -264,5 +293,7 @@ const deleteProductbyId = async function (req, res) {
 
 
 module.exports={createProduct,getProduct,getProductbyId,updateProduct,deleteProductbyId}
+
+
 
 

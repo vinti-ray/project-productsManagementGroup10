@@ -232,6 +232,10 @@ const userLogin = async function (req, res) {
  
         }
 
+        if(req.body.profileImage==""){ 
+            return res.status(400).send({ status: false, message:"please upload  profileimage" })
+           }
+
          if (Object.keys(data).length == 0) {
           return res.status(400).send({ status: false, message: "Please Enter data in body in order to update it" })
         }
