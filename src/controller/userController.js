@@ -78,9 +78,7 @@ const createUser=async (req,res)=>{
 
 	  let createData=await userModel.create(data)
 
-      //removing __V
-    createData=createData._doc
-    delete createData.__v
+
 
 	  return res.status(201).send({status:true,message: "User created successfully",data:createData})
 } catch (error) {
@@ -246,7 +244,7 @@ const userLogin = async function (req, res) {
         }
        
 
-	    const updateData=await userModel.findByIdAndUpdate(userId,{$set:{...data}},{new:true}).select({__v:0})
+	    const updateData=await userModel.findByIdAndUpdate(userId,{$set:{...data}},{new:true})
  
 
 	    return res.status(200).send({status:false,message:"User profile updated",data:updateData})

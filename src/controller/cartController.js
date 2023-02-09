@@ -245,7 +245,7 @@ const deleteCart = async (req, res) => {
         await cartModel.findOneAndUpdate({ userId }, { items: [], totalPrice: 0, totalItems: 0 });
 
      //response body is empty with status code 204
-      return  res.status(204).send();           //ask TA
+      return  res.status(204).send({status:true,message:"done"});           //ask TA
     }
     catch (err) {
       return  res.status(500).send({ status: false, message: err.message });

@@ -114,8 +114,9 @@ const getProduct = async (req,res)=>{
 
 
     if(name){
-         filter.title = name
+         filter.title = { $regex:name, $options: "i" }
     }
+
 
     if(priceGreaterThan){
         if(priceLessThan){
