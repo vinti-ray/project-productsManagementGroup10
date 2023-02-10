@@ -60,7 +60,7 @@ const createOrder = async (req, res) => {
             }
 
 
-    return res.status(201).send({ status: true, message: "success", data: createOrder })
+    return res.status(201).send({ status: true, message: "Success", data: createOrder })
 
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message })
@@ -109,7 +109,7 @@ const updateOrder = async (req, res) => {
             delete i._id
             }
 
-        return res.status(200).send({ status: true, message: "update successful", data: updateStatus })
+        return res.status(200).send({ status: true, message: "update Successful", data: updateStatus })
       } else {
         return res.status(400).send({ status: false, message: "this order is not cancellable sorry for your inconvenience" })     ///status code review
       }
@@ -123,7 +123,7 @@ const updateOrder = async (req, res) => {
           delete i._id
           }
 
-        return res.status(200).send({ status: true, message: "update successful", data: updateStatus })
+        return res.status(200).send({ status: true, message: "update Successful", data: updateStatus })
     }
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message })

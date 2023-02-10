@@ -12,7 +12,7 @@ const userJoi=Joi.object({
 
     profileImage:Joi.required(),
 
-    phone:Joi.string().trim().required().regex(/^[5-9]{1}[0-9]{9}$/).message("please enter valid mobile number"),
+    phone:Joi.string().trim().required().regex(/^[6-9]{1}[0-9]{9}$/).message("please enter valid mobile number"),
 
     password:Joi.string().trim().required().min(8).max(15).regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,15}$/).message("password must contain one upper case one lower case one special character and one numerical value"),
 

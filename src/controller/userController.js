@@ -80,7 +80,7 @@ const createUser=async (req,res)=>{
 
 
 
-	  return res.status(201).send({status:true,message: "User created successfully",data:createData})
+	  return res.status(201).send({status:true,message: "User created Successfully",data:createData})
 } catch (error) {
 	return res.status(500).send({status:false,message:error.message})
 }
@@ -120,7 +120,7 @@ const userLogin = async function (req, res) {
                 },
                 "ProductManagementGroup10",
                 { expiresIn: "30h" })          
-            return res.status(200).send({ status: true, message: "User login successfull, token will be valid for 30 Minute", data: { userId: findUser._id, token } })
+            return res.status(200).send({ status: true, message: "User login Successfull, token will be valid for 30 Minute", data: { userId: findUser._id, token } })
         }
         else {
             return res.status(400).send({ status: false, message: `Password is wrong for this email: ${email}` })
